@@ -16,7 +16,7 @@ const UserDashboard = ({ showToast }: Props) => {
     const [signOut, { isLoading: isSigningOut }] = useSignOutMutation();
 
     const subtitle = useMemo(() => {
-        return "Drag projects between columns to update status. Edits save automatically.";
+        return "Drag projects between columns to update status. Click save to apply changes.";
     }, []);
 
     return (
