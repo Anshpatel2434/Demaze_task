@@ -3,7 +3,6 @@ import type { Project, UserProfile } from "../../../types";
 import { PAGE_SIZE, useListProjectsQuery, useUpdateProjectMutation } from "../../../services/appApi";
 import { Skeleton } from "../../../components/ui/Skeleton";
 import { EmptyState } from "../../../components/ui/EmptyState";
-import { Button } from "../../../components/ui/Button";
 import type { ShowToast } from "../../../App";
 
 function findUserEmail(users: UserProfile[], id: string) {
@@ -46,7 +45,7 @@ export function AdminProjectList({ selectedUser, knownUsers, showToast }: Props)
         return () => observer.disconnect();
     }, [canLoadMore, nextOffset]);
 
-    const [updateProject, { isLoading: isAssigning }] = useUpdateProjectMutation();
+    const [updateProject] = useUpdateProjectMutation();
 
     const assignTimerRef = useRef<number | null>(null);
     const pendingProjectRef = useRef<Project | null>(null);
@@ -88,6 +87,13 @@ export function AdminProjectList({ selectedUser, knownUsers, showToast }: Props)
         }, 250);
     };
 
+    const handleUserCardScroll = (project: Project) => {
+        // Auto-assign when user scrolls over the user name in the project card
+        if (selectedUser && selectedUser.id !== project.assigned_user_id) {
+            onAssignClick(project);
+        }
+    };
+
     return (
         <div className="space-y-3">
             <div className="flex items-center justify-between">
@@ -122,7 +128,7 @@ export function AdminProjectList({ selectedUser, knownUsers, showToast }: Props)
                 <EmptyState title="No projects" description="Create a project to get started." />
             ) : null}
 
-            <div className="space-y-3">
+            <div className="max-h-[600px] overflow-y-auto pr-1 space-y-3">
                 {items.map((p) => (
                     <div
                         key={p.id}
@@ -145,16 +151,15 @@ export function AdminProjectList({ selectedUser, knownUsers, showToast }: Props)
                         </div>
 
                         <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
-                            <p className="text-xs text-slate-400">
-                                Assigned: <span className="text-slate-200">{findUserEmail(knownUsers, p.assigned_user_id)}</span>
-                            </p>
-                            <Button
-                                variant="secondary"
-                                disabled={!selectedUser || isAssigning}
-                                onClick={() => onAssignClick(p)}
-                            >
-                                Assign to selected
-                            </Button>
+                            <div className="text-xs text-slate-400">
+                                Assigned: <span 
+                                    className="text-slate-200 hover:text-indigo-200 cursor-pointer transition-colors px-1 py-0.5 rounded hover:bg-indigo-500/10"
+                                    onMouseEnter={() => handleUserCardScroll(p)}
+                                    title="Hover over this to auto-assign to selected user"
+                                >
+                                    {findUserEmail(knownUsers, p.assigned_user_id)}
+                                </span>
+                            </div>
                         </div>
                     </div>
                 ))}

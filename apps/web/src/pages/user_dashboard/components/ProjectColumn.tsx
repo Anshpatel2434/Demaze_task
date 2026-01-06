@@ -138,7 +138,7 @@ export function ProjectColumn({ assignedUserId, isCompleted, title, showToast }:
                 />
             ) : null}
 
-            <div className="flex flex-col gap-3">
+            <div className="flex-1 overflow-y-auto pr-1 flex flex-col gap-3">
                 {items.map((p) => (
                     <ProjectCard key={p.id} project={p} disabled={locked} showToast={showToast} />
                 ))}
