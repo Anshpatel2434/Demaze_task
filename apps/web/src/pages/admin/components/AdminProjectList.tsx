@@ -3,6 +3,7 @@ import type { Project, UserProfile } from "../../../types";
 import { PAGE_SIZE, useListProjectsQuery, useUpdateProjectMutation } from "../../../services/appApi";
 import { Skeleton } from "../../../components/ui/Skeleton";
 import { EmptyState } from "../../../components/ui/EmptyState";
+import { EditProjectModal } from "../../../components/ui/EditProjectModal";
 import type { ShowToast } from "../../../App";
 import { useAppDispatch, useAppSelector } from "../../../store/hooks";
 import { endDragUser, lockDnd, unlockDnd } from "../../../store/slices/dndSlice";
@@ -21,6 +22,7 @@ export function AdminProjectList({ knownUsers, showToast }: Props) {
     const { locked, draggingUserId, updatingProjectId } = useAppSelector((s) => s.dnd);
 
     const [offset, setOffset] = useState(0);
+    const [selectedProject, setSelectedProject] = useState<Project | null>(null);
 
     const args = useMemo(() => ({ offset, limit: PAGE_SIZE }), [offset]);
     const { data, isLoading, isFetching, isError, refetch } = useListProjectsQuery(args);
@@ -30,11 +32,13 @@ export function AdminProjectList({ knownUsers, showToast }: Props) {
     const canLoadMore = Boolean(nextOffset) && !isFetching;
 
     const sentinelRef = useRef<HTMLDivElement | null>(null);
+    const scrollContainerRef = useRef<HTMLDivElement | null>(null);
 
     useEffect(() => {
         if (!canLoadMore) return;
         const el = sentinelRef.current;
-        if (!el) return;
+        const container = scrollContainerRef.current;
+        if (!el || !container) return;
 
         const observer = new IntersectionObserver(
             (entries) => {
@@ -42,7 +46,7 @@ export function AdminProjectList({ knownUsers, showToast }: Props) {
                 if (nextOffset == null) return;
                 setOffset(nextOffset);
             },
-            { root: null, rootMargin: "200px" }
+            { root: container, rootMargin: "200px" }
         );
 
         observer.observe(el);
@@ -122,7 +126,7 @@ export function AdminProjectList({ knownUsers, showToast }: Props) {
                 <EmptyState title="No projects" description="Create a project to get started." />
             ) : null}
 
-            <div className="space-y-3 max-h-screen overflow-y-auto">
+            <div ref={scrollContainerRef} className="flex-1 space-y-3 overflow-y-auto">
                 {items.map((p) => {
                     const isUpdating = updatingProjectId === p.id;
                     const isDropTarget = draggingUserId !== null && !locked;
@@ -134,7 +138,8 @@ export function AdminProjectList({ knownUsers, showToast }: Props) {
                                 if (isDropTarget) e.preventDefault();
                             }}
                             onDrop={(e) => handleDrop(e, p)}
-                            className={`relative rounded-2xl border p-4 shadow-sm transition ${
+                            onClick={() => setSelectedProject(p)}
+                            className={`relative cursor-pointer rounded-2xl border p-4 shadow-sm transition hover:border-indigo-400/40 ${
                                 isDropTarget
                                     ? "border-indigo-400/60 bg-slate-950/60 ring-2 ring-indigo-400/20"
                                     : "border-white/10 bg-slate-950/40"
@@ -176,10 +181,10 @@ export function AdminProjectList({ knownUsers, showToast }: Props) {
                                     <p className="text-xs text-indigo-300">Drop user to assign</p>
                                 ) : null}
                             </div>
-                            <div ref={sentinelRef} />
                         </div>
                     );
                 })}
+                <div ref={sentinelRef} />
             </div>
 
 
@@ -190,6 +195,15 @@ export function AdminProjectList({ knownUsers, showToast }: Props) {
                     ))}
                 </div>
             ) : null}
+
+            {selectedProject && (
+                <EditProjectModal
+                    isOpen={true}
+                    onClose={() => setSelectedProject(null)}
+                    project={selectedProject}
+                    showToast={showToast}
+                />
+            )}
         </div>
     );
 }

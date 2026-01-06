@@ -34,11 +34,13 @@ export function ProjectColumn({ assignedUserId, isCompleted, title, showToast }:
     const canLoadMore = Boolean(nextOffset) && !isFetching;
 
     const sentinelRef = useRef<HTMLDivElement | null>(null);
+    const scrollContainerRef = useRef<HTMLDivElement | null>(null);
 
     useEffect(() => {
         if (!canLoadMore) return;
         const el = sentinelRef.current;
-        if (!el) return;
+        const container = scrollContainerRef.current;
+        if (!el || !container) return;
 
         const observer = new IntersectionObserver(
             (entries) => {
@@ -46,7 +48,7 @@ export function ProjectColumn({ assignedUserId, isCompleted, title, showToast }:
                 if (nextOffset == null) return;
                 setOffset(nextOffset);
             },
-            { root: null, rootMargin: "200px" }
+            { root: container, rootMargin: "200px" }
         );
 
         observer.observe(el);
@@ -101,9 +103,9 @@ export function ProjectColumn({ assignedUserId, isCompleted, title, showToast }:
                 if (!locked) e.preventDefault();
             }}
             onDrop={onDrop}
-            className="flex min-h-[520px] flex-col gap-3 rounded-2xl border border-white/10 bg-slate-950/20 p-4"
+            className="flex h-full flex-col gap-3 rounded-2xl border border-white/10 bg-slate-950/20 p-4 overflow-hidden"
         >
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between shrink-0">
                 <h2 className="text-sm font-semibold text-slate-100">{title}</h2>
                 <p className="text-xs text-slate-400">{items.length}</p>
             </div>
@@ -138,16 +140,15 @@ export function ProjectColumn({ assignedUserId, isCompleted, title, showToast }:
                 />
             ) : null}
 
-            <div className="flex flex-col gap-3 max-h-screen overflow-y-auto">
+            <div ref={scrollContainerRef} className="flex-1 flex flex-col gap-3 overflow-y-auto">
                 {items.map((p) => (
                     <ProjectCard key={p.id} project={p} disabled={locked} showToast={showToast} />
                 ))}
-            <div ref={sentinelRef} />
+                <div ref={sentinelRef} />
             </div>
 
-
             {isFetching && !isLoading ? (
-                <div className="space-y-3">
+                <div className="space-y-3 shrink-0">
                     {Array.from({ length: 2 }).map((_, idx) => (
                         <Skeleton key={idx} className="h-36 w-full" />
                     ))}

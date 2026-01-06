@@ -45,11 +45,13 @@ export function UserList({ selectedUserId, onSelect }: Props) {
     const canLoadMore = Boolean(nextOffset) && !isFetching;
 
     const sentinelRef = useRef<HTMLLIElement | null>(null);
+    const scrollContainerRef = useRef<HTMLUListElement | null>(null);
 
     useEffect(() => {
         if (!canLoadMore) return;
         const el = sentinelRef.current;
-        if (!el) return;
+        const container = scrollContainerRef.current;
+        if (!el || !container) return;
 
         const observer = new IntersectionObserver(
             (entries) => {
@@ -57,7 +59,7 @@ export function UserList({ selectedUserId, onSelect }: Props) {
                 if (nextOffset == null) return;
                 setOffset(nextOffset);
             },
-            { root: null, rootMargin: "200px" }
+            { root: container, rootMargin: "200px" }
         );
 
         observer.observe(el);
@@ -103,7 +105,7 @@ export function UserList({ selectedUserId, onSelect }: Props) {
                 <EmptyState title="No users found" description="Try a different email search." />
             ) : null}
 
-            <ul className="max-h-[360px] space-y-2 overflow-auto pr-1">
+            <ul ref={scrollContainerRef} className="flex-1 space-y-2 overflow-auto pr-1">
                 {items.map((u) => {
                     const selected = u.id === selectedUserId;
                     const isDragging = draggingUserId === u.id;

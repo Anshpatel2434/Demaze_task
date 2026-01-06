@@ -16,39 +16,43 @@ const UserDashboard = ({ showToast }: Props) => {
     const [signOut, { isLoading: isSigningOut }] = useSignOutMutation();
 
     const subtitle = useMemo(() => {
-        return "Drag projects between columns to update status. Edits save automatically.";
+        return "Drag projects between columns to update status. Click to edit.";
     }, []);
 
     return (
-        <div className="mx-auto w-full max-w-6xl space-y-6 p-6">
-            <TopBar
-                title="Your Dashboard"
-                subtitle={subtitle}
-                actions={
-                    <Button
-                        variant="ghost"
-                        isLoading={isSigningOut}
-                        onClick={async () => {
-                            try {
-                                await signOut().unwrap();
-                                showToast("info", "Signed out.");
-                            } catch (err) {
-                                const message = (err as { data?: string })?.data ?? "Couldn't sign out";
-                                showToast("error", message);
-                            }
-                        }}
-                    >
-                        Sign out
-                    </Button>
-                }
-            />
+        <div className="flex h-screen flex-col overflow-hidden">
+            <div className="shrink-0 px-6 pt-6">
+                <TopBar
+                    title="Your Dashboard"
+                    subtitle={subtitle}
+                    actions={
+                        <Button
+                            variant="ghost"
+                            isLoading={isSigningOut}
+                            onClick={async () => {
+                                try {
+                                    await signOut().unwrap();
+                                    showToast("info", "Signed out.");
+                                } catch (err) {
+                                    const message = (err as { data?: string })?.data ?? "Couldn't sign out";
+                                    showToast("error", message);
+                                }
+                            }}
+                        >
+                            Sign out
+                        </Button>
+                    }
+                />
+            </div>
 
-            {userId ? (
-                <div className="grid gap-4 md:grid-cols-2">
-                    <ProjectColumn assignedUserId={userId} isCompleted={false} title="In Progress" showToast={showToast} />
-                    <ProjectColumn assignedUserId={userId} isCompleted={true} title="Completed" showToast={showToast} />
-                </div>
-            ) : null}
+            <div className="flex-1 overflow-hidden px-6 pb-6 pt-4">
+                {userId ? (
+                    <div className="grid h-full gap-4 md:grid-cols-2">
+                        <ProjectColumn assignedUserId={userId} isCompleted={false} title="In Progress" showToast={showToast} />
+                        <ProjectColumn assignedUserId={userId} isCompleted={true} title="Completed" showToast={showToast} />
+                    </div>
+                ) : null}
+            </div>
         </div>
     );
 };
