@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Navigate } from "react-router-dom";
 import { useLoginMutation, useSignUpMutation } from "../redux_usecases/authApi";
 import { useBootstrapAuthQuery } from "../../../services/appApi";
@@ -6,11 +6,13 @@ import { Card } from "../../../components/ui/Card";
 import { Input } from "../../../components/ui/Input";
 import { Button } from "../../../components/ui/Button";
 import { LoginButton } from "../components/LoginButton";
-import { useToast } from "../../../hooks/useToast";
-import { useDebouncedCallback } from "../../../hooks/useDebouncedCallback";
+import type { ShowToast } from "../../../App";
 
-export const AuthPage = () => {
-    const toast = useToast();
+type Props = {
+    showToast: ShowToast;
+};
+
+export const AuthPage = ({ showToast }: Props) => {
     const { data: bootstrap, isLoading: isBootstrapping } = useBootstrapAuthQuery();
 
     const [email, setEmail] = useState("");
@@ -27,27 +29,31 @@ export const AuthPage = () => {
 
     const isLoading = isLoggingIn || isSigningUp;
 
-    const onSubmitDebounced = useDebouncedCallback(
-        async () => {
-            try {
-                if (isLoginMode) {
-                    await login({ email, password }).unwrap();
-                    toast.success("Welcome back.", "auth:login:success");
-                } else {
-                    await signUp({ email, password }).unwrap();
-                    toast.success("Account created — check your email if confirmation is enabled.", "auth:signup:success");
-                }
+    const submitTimerRef = useRef<number | null>(null);
 
-                setEmail("");
-                setPassword("");
-            } catch (err) {
-                const message = (err as { data?: string })?.data ?? "Authentication failed";
-                toast.error(message, `auth:error:${message}`);
+    const onSubmit = async () => {
+        try {
+            if (isLoginMode) {
+                await login({ email, password }).unwrap();
+                showToast("success", "Welcome back.");
+            } else {
+                await signUp({ email, password }).unwrap();
+                showToast("success", "Account created — check your email if confirmation is enabled.");
             }
-        },
-        250,
-        { leading: true, trailing: false }
-    );
+
+            setEmail("");
+            setPassword("");
+        } catch (err) {
+            const message = (err as { data?: string })?.data ?? "Authentication failed";
+            showToast("error", message);
+        }
+    };
+
+    useEffect(() => {
+        return () => {
+            if (submitTimerRef.current) window.clearTimeout(submitTimerRef.current);
+        };
+    }, []);
 
     if (redirectTo) return <Navigate to={redirectTo} replace />;
 
@@ -70,7 +76,11 @@ export const AuthPage = () => {
                         onSubmit={(e) => {
                             e.preventDefault();
                             if (isLoading) return;
-                            onSubmitDebounced.callback();
+
+                            if (submitTimerRef.current) window.clearTimeout(submitTimerRef.current);
+                            submitTimerRef.current = window.setTimeout(() => {
+                                void onSubmit();
+                            }, 250);
                         }}
                         className="space-y-4"
                     >
@@ -107,7 +117,7 @@ export const AuthPage = () => {
                         </div>
 
                         <div className="flex justify-center">
-                            <LoginButton disabled={isLoading || isBootstrapping} />
+                            <LoginButton disabled={isLoading || isBootstrapping} showToast={showToast} />
                         </div>
                     </form>
                 </Card>

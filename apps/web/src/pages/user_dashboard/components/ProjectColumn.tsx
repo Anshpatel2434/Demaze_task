@@ -1,12 +1,11 @@
 import { skipToken } from "@reduxjs/toolkit/query";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Project } from "../../../types";
 import { PAGE_SIZE, useListProjectsQuery, useUpdateProjectMutation } from "../../../services/appApi";
-import { useInfiniteScroll } from "../../../hooks/useInfiniteScroll";
 import { Skeleton } from "../../../components/ui/Skeleton";
 import { EmptyState } from "../../../components/ui/EmptyState";
 import { ProjectCard } from "./ProjectCard";
-import { useToast } from "../../../hooks/useToast";
+import type { ShowToast } from "../../../App";
 import { useAppDispatch, useAppSelector } from "../../../store/hooks";
 import { endDrag, lockDnd, unlockDnd } from "../../../store/slices/dndSlice";
 
@@ -14,10 +13,10 @@ type Props = {
     assignedUserId: string;
     isCompleted: boolean;
     title: string;
+    showToast: ShowToast;
 };
 
-export function ProjectColumn({ assignedUserId, isCompleted, title }: Props) {
-    const toast = useToast();
+export function ProjectColumn({ assignedUserId, isCompleted, title, showToast }: Props) {
     const dispatch = useAppDispatch();
     const { draggingProjectId, locked } = useAppSelector((s) => s.dnd);
 
@@ -33,13 +32,26 @@ export function ProjectColumn({ assignedUserId, isCompleted, title }: Props) {
     const nextOffset = data?.nextOffset ?? null;
 
     const canLoadMore = Boolean(nextOffset) && !isFetching;
-    const sentinelRef = useInfiniteScroll({
-        enabled: canLoadMore,
-        onLoadMore: () => {
-            if (nextOffset == null) return;
-            setOffset(nextOffset);
-        },
-    });
+
+    const sentinelRef = useRef<HTMLDivElement | null>(null);
+
+    useEffect(() => {
+        if (!canLoadMore) return;
+        const el = sentinelRef.current;
+        if (!el) return;
+
+        const observer = new IntersectionObserver(
+            (entries) => {
+                if (!entries[0]?.isIntersecting) return;
+                if (nextOffset == null) return;
+                setOffset(nextOffset);
+            },
+            { root: null, rootMargin: "200px" }
+        );
+
+        observer.observe(el);
+        return () => observer.disconnect();
+    }, [canLoadMore, nextOffset]);
 
     const [updateProject] = useUpdateProjectMutation();
 
@@ -68,26 +80,26 @@ export function ProjectColumn({ assignedUserId, isCompleted, title }: Props) {
                     patch: { is_completed: isCompleted },
                     optimisticProject: dragged,
                 }).unwrap();
-                toast.success(
-                    isCompleted ? "Marked as completed." : "Moved back to in progress.",
-                    `project:dnd:${dragged.id}:${isCompleted}`
+                showToast(
+                    "success",
+                    isCompleted ? "Marked as completed." : "Moved back to in progress."
                 );
             } catch (err) {
                 const message = (err as { data?: string })?.data ?? "Failed to update project";
-                toast.error(message, `project:dnd:error:${dragged.id}`);
+                showToast("error", message);
             } finally {
                 dispatch(unlockDnd());
                 dispatch(endDrag());
             }
         },
-        [dispatch, draggingProjectId, isCompleted, locked, toast, updateProject]
+        [dispatch, draggingProjectId, isCompleted, locked, showToast, updateProject]
     );
 
     return (
         <section
             onDragOver={(e) => {
-            if (!locked) e.preventDefault();
-        }}
+                if (!locked) e.preventDefault();
+            }}
             onDrop={onDrop}
             className="flex min-h-[520px] flex-col gap-3 rounded-2xl border border-white/10 bg-slate-950/20 p-4"
         >
@@ -128,7 +140,7 @@ export function ProjectColumn({ assignedUserId, isCompleted, title }: Props) {
 
             <div className="flex flex-col gap-3">
                 {items.map((p) => (
-                    <ProjectCard key={p.id} project={p} disabled={locked} />
+                    <ProjectCard key={p.id} project={p} disabled={locked} showToast={showToast} />
                 ))}
             </div>
 
