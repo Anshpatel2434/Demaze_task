@@ -18,9 +18,9 @@ type ToastState = {
 } | null;
 
 const toastStyles: Record<ToastVariant, string> = {
-    success: "border-emerald-400/60 bg-emerald-950/30 text-emerald-50",
-    error: "border-rose-400/60 bg-rose-950/30 text-rose-50",
-    info: "border-sky-400/60 bg-sky-950/30 text-sky-50",
+    success: "border-green-300 bg-green-50 text-green-800",
+    error: "border-red-300 bg-red-50 text-red-800",
+    info: "border-blue-300 bg-blue-50 text-blue-800",
 };
 
 function App() {
@@ -62,17 +62,17 @@ function App() {
     }, [dispatch]);
 
     return (
-        <div className="min-h-dvh bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 text-slate-100">
+        <div className="min-h-dvh bg-gray-50 text-gray-900">
             {toast ? (
                 <div className="fixed right-4 top-4 z-50 w-[min(420px,calc(100vw-2rem))]">
                     <div
                         role="status"
-                        className={`flex items-start justify-between gap-4 rounded-xl border p-4 shadow-lg backdrop-blur ${toastStyles[toast.variant]}`}
+                        className={`flex items-start justify-between gap-4 rounded-xl border p-4 shadow-lg ${toastStyles[toast.variant]}`}
                     >
                         <p className="text-sm leading-5">{toast.message}</p>
                         <button
                             onClick={() => setToast(null)}
-                            className="rounded-md px-2 py-1 text-xs text-white/80 hover:bg-white/10 hover:text-white focus:outline-none focus:ring-2 focus:ring-white/30"
+                            className="rounded-md px-2 py-1 text-xs font-medium text-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-300"
                             aria-label="Dismiss notification"
                         >
                             Dismiss

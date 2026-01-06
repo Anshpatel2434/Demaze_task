@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { UserProfile } from "../../../types";
 import { useListUserProfilesQuery, PAGE_SIZE } from "../../../services/appApi";
-import { Input } from "../../../components/ui/Input";
 import { Skeleton } from "../../../components/ui/Skeleton";
 import { EmptyState } from "../../../components/ui/EmptyState";
+import { useAppDispatch } from "../../../store/hooks";
+import { startDragUser, endDragUser } from "../../../store/slices/dndSlice";
 
 type Props = {
     selectedUserId: string | null;
@@ -11,6 +12,7 @@ type Props = {
 };
 
 export function UserList({ selectedUserId, onSelect }: Props) {
+    const dispatch = useAppDispatch();
     const [search, setSearch] = useState("");
     const [debouncedSearch, setDebouncedSearch] = useState("");
     const [offset, setOffset] = useState(0);
@@ -61,15 +63,22 @@ export function UserList({ selectedUserId, onSelect }: Props) {
 
     return (
         <div className="space-y-3">
-            <Input
-                label="Search users"
-                placeholder="Search by email…"
-                value={search}
-                onChange={(e) => {
-                    setSearch(e.target.value);
-                    setOffset(0);
-                }}
-            />
+            <div>
+                <label htmlFor="search-users" className="block text-sm font-medium text-gray-700">
+                    Search users
+                </label>
+                <input
+                    id="search-users"
+                    type="text"
+                    placeholder="Search by email…"
+                    value={search}
+                    onChange={(e) => {
+                        setSearch(e.target.value);
+                        setOffset(0);
+                    }}
+                    className="mt-1 w-full rounded-xl border border-gray-300 px-3 py-2 text-sm text-gray-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                />
+            </div>
 
             {isLoading ? (
                 <div className="space-y-2">
@@ -86,7 +95,7 @@ export function UserList({ selectedUserId, onSelect }: Props) {
                     action={
                         <button
                             onClick={() => refetch()}
-                            className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-slate-100 hover:bg-white/10"
+                            className="rounded-xl border border-gray-300 bg-white px-4 py-2 text-sm text-gray-900 hover:bg-gray-50"
                         >
                             Retry
                         </button>
@@ -104,19 +113,26 @@ export function UserList({ selectedUserId, onSelect }: Props) {
                     return (
                         <li key={u.id}>
                             <button
+                                draggable
                                 onClick={() => onSelect(u)}
-                                className={`flex w-full items-center justify-between rounded-xl border px-3 py-2 text-left text-sm transition focus:outline-none focus:ring-2 focus:ring-indigo-400/20 ${
+                                onDragStart={(e) => {
+                                    dispatch(startDragUser(u.id));
+                                    e.dataTransfer.setData("application/json", JSON.stringify(u));
+                                    e.dataTransfer.effectAllowed = "move";
+                                }}
+                                onDragEnd={() => dispatch(endDragUser())}
+                                className={`flex w-full cursor-grab items-center justify-between rounded-xl border px-3 py-2 text-left text-sm transition focus:outline-none focus:ring-2 focus:ring-blue-500/20 active:cursor-grabbing ${
                                     selected
-                                        ? "border-indigo-400/60 bg-indigo-500/10"
-                                        : "border-white/10 bg-slate-950/30 hover:bg-slate-950/50"
+                                        ? "border-blue-500 bg-blue-50"
+                                        : "border-gray-200 bg-white hover:bg-gray-50"
                                 }`}
                             >
                                 <div className="min-w-0">
-                                    <p className="truncate font-medium text-slate-100">{u.email}</p>
-                                    <p className="truncate text-xs text-slate-400">{u.full_name ?? "—"}</p>
+                                    <p className="truncate font-medium text-gray-900">{u.email}</p>
+                                    <p className="truncate text-xs text-gray-500">{u.full_name ?? "—"}</p>
                                 </div>
                                 {u.is_admin ? (
-                                    <span className="rounded-full bg-indigo-500/15 px-2 py-1 text-xs text-indigo-200">
+                                    <span className="rounded-full bg-blue-100 px-2 py-1 text-xs font-medium text-blue-700">
                                         Admin
                                     </span>
                                 ) : null}
