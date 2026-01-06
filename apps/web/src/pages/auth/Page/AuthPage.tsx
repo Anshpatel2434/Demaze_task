@@ -111,13 +111,6 @@ export const AuthPage = ({ showToast }: Props) => {
                             <div className="absolute inset-0 flex items-center">
                                 <div className="w-full border-t border-white/10" />
                             </div>
-                            <div className="relative flex justify-center">
-                                <span className="bg-slate-950/0 px-2 text-xs text-slate-400">or</span>
-                            </div>
-                        </div>
-
-                        <div className="flex justify-center">
-                            <LoginButton disabled={isLoading || isBootstrapping} showToast={showToast} />
                         </div>
                     </form>
                 </Card>
