@@ -1,119 +1,128 @@
-import { useEffect, useState } from "react";
-import {
-	useFetchUserQuery,
-	useLoginMutation,
-	useSignUpMutation,
-} from "../redux_usecases/authApi";
+import { useMemo, useState } from "react";
+import { Navigate } from "react-router-dom";
+import { useLoginMutation, useSignUpMutation } from "../redux_usecases/authApi";
+import { useBootstrapAuthQuery } from "../../../services/appApi";
+import { Card } from "../../../components/ui/Card";
+import { Input } from "../../../components/ui/Input";
+import { Button } from "../../../components/ui/Button";
 import { LoginButton } from "../components/LoginButton";
-
-type otpType = string;
+import { useToast } from "../../../hooks/useToast";
+import { useDebouncedCallback } from "../../../hooks/useDebouncedCallback";
 
 export const AuthPage = () => {
-	// 1. Local state for form inputs
-	const [email, setEmail] = useState("");
-	const [password, setPassword] = useState("");
-	const [isLoginMode, setIsLoginMode] = useState(true); // Toggle between Login and Sign Up
+    const toast = useToast();
+    const { data: bootstrap, isLoading: isBootstrapping } = useBootstrapAuthQuery();
 
-	// 2. The Mutation Hooks
-	// The first item (login) is the TRIGGER function.
-	// The second item is an object with status flags (isLoading, error, etc.)
-	const [login, { isLoading: isLoggingIn }] = useLoginMutation();
-	const [signUp, { isLoading: isSigningUp }] = useSignUpMutation();
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
+    const [isLoginMode, setIsLoginMode] = useState(true);
 
-	const { data } = useFetchUserQuery();
-	const [user, setUser] = useState<any>(data);
-	useEffect(() => {
-		setUser(data);
-	}, [data]);
+    const [login, { isLoading: isLoggingIn }] = useLoginMutation();
+    const [signUp, { isLoading: isSigningUp }] = useSignUpMutation();
 
-	const handleAuth = async (e: React.FormEvent) => {
-		e.preventDefault();
+    const redirectTo = useMemo(() => {
+        if (!bootstrap?.userId || !bootstrap.profile) return null;
+        return bootstrap.profile.is_admin ? "/admin" : "/dashboard";
+    }, [bootstrap?.profile, bootstrap?.userId]);
 
-		try {
-			// 3. Call the appropriate mutation
-			// We use .unwrap() to extract the payload or throw an error immediately
-			// This makes standard try/catch blocks work perfectly!
-			if (isLoginMode) {
-				await login({ email, password }).unwrap();
-				alert("Logged in successfully!");
-			} else {
-				await signUp({ email, password }).unwrap();
-				alert("Signed Up successfully!");
-			}
+    const isLoading = isLoggingIn || isSigningUp;
 
-			// Clear inputs
-			setEmail("");
-			setPassword("");
-		} catch (err: any) {
-			console.error("Failed:", err);
-			alert(err.data || "Something went wrong");
-		}
-	};
+    const onSubmitDebounced = useDebouncedCallback(
+        async () => {
+            try {
+                if (isLoginMode) {
+                    await login({ email, password }).unwrap();
+                    toast.success("Welcome back.", "auth:login:success");
+                } else {
+                    await signUp({ email, password }).unwrap();
+                    toast.success("Account created — check your email if confirmation is enabled.", "auth:signup:success");
+                }
 
-	const isLoading = isLoggingIn || isSigningUp;
+                setEmail("");
+                setPassword("");
+            } catch (err) {
+                const message = (err as { data?: string })?.data ?? "Authentication failed";
+                toast.error(message, `auth:error:${message}`);
+            }
+        },
+        250,
+        { leading: true, trailing: false }
+    );
 
-	console.log(
-		"So are you telling me that we already have the user present on every refresh here ? "
-	);
-	console.log(user);
+    if (redirectTo) return <Navigate to={redirectTo} replace />;
 
-	return (
-		<div className="max-w-md mx-auto mt-10 p-6 border rounded-lg shadow-lg bg-white">
-			<h2 className="text-2xl font-bold mb-4 text-center">
-				{isLoginMode ? "Welcome Back" : "Create Account"}
-			</h2>
+    return (
+        <div className="mx-auto flex min-h-dvh w-full max-w-md items-center px-5 py-10">
+            <div className="w-full space-y-4">
+                <div className="space-y-1 text-center">
+                    <h1 className="text-2xl font-semibold tracking-tight text-slate-100">
+                        {isLoginMode ? "Sign in" : "Create your account"}
+                    </h1>
+                    <p className="text-sm text-slate-400">
+                        {isLoginMode
+                            ? "Use your email and password to continue."
+                            : "Create an account to receive and manage your assigned projects."}
+                    </p>
+                </div>
 
-			<form onSubmit={handleAuth} className="space-y-4">
-				<div>
-					<label className="block text-sm font-medium text-gray-700">
-						Email
-					</label>
-					<input
-						type="email"
-						value={email}
-						onChange={(e) => setEmail(e.target.value)}
-						className="mt-1 block w-full p-2 border rounded shadow-sm"
-						required
-					/>
-				</div>
-				<div>
-					<label className="block text-sm font-medium text-gray-700">
-						Password
-					</label>
-					<input
-						type="password"
-						value={password}
-						onChange={(e) => setPassword(e.target.value)}
-						className="mt-1 block w-full p-2 border rounded shadow-sm"
-						required
-					/>
-				</div>
+                <Card>
+                    <form
+                        onSubmit={(e) => {
+                            e.preventDefault();
+                            if (isLoading) return;
+                            onSubmitDebounced.callback();
+                        }}
+                        className="space-y-4"
+                    >
+                        <Input
+                            label="Email"
+                            type="email"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            required
+                            disabled={isLoading || isBootstrapping}
+                            placeholder="name@company.com"
+                        />
+                        <Input
+                            label="Password"
+                            type="password"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            required
+                            disabled={isLoading || isBootstrapping}
+                            placeholder="••••••••"
+                        />
 
-				<button
-					type="submit"
-					disabled={isLoading}
-					className="w-full bg-indigo-600 text-white p-2 rounded hover:bg-indigo-700 disabled:opacity-50"
-				>
-					{isLoading ? "Processing..." : isLoginMode ? "Log In" : "Sign Up"}
-				</button>
-			</form>
+                        <Button type="submit" className="w-full" isLoading={isLoading} disabled={isBootstrapping}>
+                            {isLoginMode ? "Sign in" : "Create account"}
+                        </Button>
 
-			<div className="mt-4 text-center">
-				<button
-					onClick={() => setIsLoginMode(!isLoginMode)}
-					className="text-sm text-indigo-600 hover:underline"
-				>
-					{isLoginMode
-						? "Don't have an account? Sign Up"
-						: "Already have an account? Log In"}
-				</button>
-			</div>
+                        <div className="relative py-2">
+                            <div className="absolute inset-0 flex items-center">
+                                <div className="w-full border-t border-white/10" />
+                            </div>
+                            <div className="relative flex justify-center">
+                                <span className="bg-slate-950/0 px-2 text-xs text-slate-400">or</span>
+                            </div>
+                        </div>
 
-			<div className="relative my-6">
-				<div className="absolute inset-0 flex items-center">
-					<div className="w-full border-t border-gray-300"></div>
-				</div>
-			</div>
-		</div>
-	);
+                        <div className="flex justify-center">
+                            <LoginButton disabled={isLoading || isBootstrapping} />
+                        </div>
+                    </form>
+                </Card>
+
+                <div className="text-center">
+                    <button
+                        type="button"
+                        onClick={() => setIsLoginMode((v) => !v)}
+                        className="text-sm text-slate-300 hover:text-white focus:outline-none focus:ring-2 focus:ring-white/20"
+                        disabled={isLoading}
+                    >
+                        {isLoginMode ? "Need an account? Sign up" : "Already have an account? Sign in"}
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
 };
