@@ -98,29 +98,34 @@ export function UserList({ selectedUserId, onSelect }: Props) {
                 <EmptyState title="No users found" description="Try a different email search." />
             ) : null}
 
-            <ul className="max-h-[360px] space-y-2 overflow-auto pr-1">
+            <ul className="space-y-2">
                 {items.map((u) => {
                     const selected = u.id === selectedUserId;
                     return (
                         <li key={u.id}>
-                            <button
+                            <div
+                                draggable
+                                onDragStart={(e) => {
+                                    e.dataTransfer.setData("application/user-id", u.id);
+                                    e.dataTransfer.effectAllowed = "move";
+                                }}
                                 onClick={() => onSelect(u)}
-                                className={`flex w-full items-center justify-between rounded-xl border px-3 py-2 text-left text-sm transition focus:outline-none focus:ring-2 focus:ring-indigo-400/20 ${
+                                className={`flex w-full cursor-pointer items-center justify-between rounded-lg border px-3 py-2 text-left text-sm transition hover:shadow-sm ${
                                     selected
-                                        ? "border-indigo-400/60 bg-indigo-500/10"
-                                        : "border-white/10 bg-slate-950/30 hover:bg-slate-950/50"
+                                        ? "border-blue-400 bg-blue-50"
+                                        : "border-gray-200 bg-white hover:border-gray-300"
                                 }`}
                             >
                                 <div className="min-w-0">
-                                    <p className="truncate font-medium text-slate-100">{u.email}</p>
-                                    <p className="truncate text-xs text-slate-400">{u.full_name ?? "—"}</p>
+                                    <p className="truncate font-medium text-gray-900">{u.email}</p>
+                                    <p className="truncate text-xs text-gray-500">{u.full_name ?? "—"}</p>
                                 </div>
                                 {u.is_admin ? (
-                                    <span className="rounded-full bg-indigo-500/15 px-2 py-1 text-xs text-indigo-200">
+                                    <span className="rounded-full bg-blue-100 px-2 py-1 text-xs font-medium text-blue-700">
                                         Admin
                                     </span>
                                 ) : null}
-                            </button>
+                            </div>
                         </li>
                     );
                 })}

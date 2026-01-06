@@ -3,7 +3,7 @@ import { useBootstrapAuthQuery, useSignOutMutation } from "../../../services/app
 import { TopBar } from "../../../components/ui/TopBar";
 import { Button } from "../../../components/ui/Button";
 import type { ShowToast } from "../../../App";
-import { ProjectColumn } from "../components/ProjectColumn";
+import { UserProjectColumn } from "../components/UserProjectColumn";
 
 type Props = {
     showToast: ShowToast;
@@ -16,11 +16,11 @@ const UserDashboard = ({ showToast }: Props) => {
     const [signOut, { isLoading: isSigningOut }] = useSignOutMutation();
 
     const subtitle = useMemo(() => {
-        return "Drag projects between columns to update status. Click save to apply changes.";
+        return "Click on projects to edit them. Drag projects between in progress and completed columns.";
     }, []);
 
     return (
-        <div className="mx-auto w-full max-w-6xl space-y-6 p-6">
+        <div className="flex h-screen flex-col bg-gray-50">
             <TopBar
                 title="Your Dashboard"
                 subtitle={subtitle}
@@ -43,12 +43,14 @@ const UserDashboard = ({ showToast }: Props) => {
                 }
             />
 
-            {userId ? (
-                <div className="grid gap-4 md:grid-cols-2">
-                    <ProjectColumn assignedUserId={userId} isCompleted={false} title="In Progress" showToast={showToast} />
-                    <ProjectColumn assignedUserId={userId} isCompleted={true} title="Completed" showToast={showToast} />
-                </div>
-            ) : null}
+            <div className="flex-1 overflow-hidden p-4">
+                {userId ? (
+                    <div className="grid h-full gap-4 lg:grid-cols-2">
+                        <UserProjectColumn assignedUserId={userId} isCompleted={false} title="In Progress" showToast={showToast} />
+                        <UserProjectColumn assignedUserId={userId} isCompleted={true} title="Completed" showToast={showToast} />
+                    </div>
+                ) : null}
+            </div>
         </div>
     );
 };
