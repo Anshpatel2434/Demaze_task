@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import type { Project } from "../../../types";
 import { ProjectSchema } from "../../../types";
 import { useUpdateProjectMutation } from "../../../services/appApi";
@@ -38,33 +38,17 @@ export function ProjectCard({ project, disabled, showToast }: Props) {
         return EditableSchema.safeParse({ title: title.trim(), description: normalizedDescription });
     }, [normalizedDescription, title]);
 
-    const saveTimerRef = useRef<number | null>(null);
-
-    useEffect(() => {
-        return () => {
-            if (saveTimerRef.current) window.clearTimeout(saveTimerRef.current);
-        };
-    }, []);
-
     const save = async () => {
         if (!validation.success) return;
         try {
             await updateProject({
                 id: project.id,
                 patch: { title: validation.data.title, description: validation.data.description },
-                optimisticProject: project,
             }).unwrap();
         } catch (err) {
             const message = (err as { data?: string })?.data ?? "Failed to save project";
             showToast("error", message);
         }
-    };
-
-    const onFieldChange = () => {
-        if (saveTimerRef.current) window.clearTimeout(saveTimerRef.current);
-        saveTimerRef.current = window.setTimeout(() => {
-            void save();
-        }, 700);
     };
 
     const showInvalid = !validation.success && (title.length > 0 || description.length > 0);
@@ -101,7 +85,6 @@ export function ProjectCard({ project, disabled, showToast }: Props) {
                         value={title}
                         onChange={(e) => {
                             setTitle(e.target.value);
-                            onFieldChange();
                         }}
                         className={`w-full rounded-xl border bg-slate-900/40 px-3 py-2 text-sm text-slate-100 outline-none transition focus:ring-2 focus:ring-indigo-400/20 disabled:cursor-not-allowed ${
                             showInvalid
@@ -121,7 +104,6 @@ export function ProjectCard({ project, disabled, showToast }: Props) {
                         value={description}
                         onChange={(e) => {
                             setDescription(e.target.value);
-                            onFieldChange();
                         }}
                         className="min-h-[80px] w-full resize-y rounded-xl border border-white/10 bg-slate-900/40 px-3 py-2 text-sm text-slate-100 outline-none transition focus:border-indigo-400/60 focus:ring-2 focus:ring-indigo-400/20 disabled:cursor-not-allowed"
                         placeholder="Optional notes…"
@@ -130,9 +112,21 @@ export function ProjectCard({ project, disabled, showToast }: Props) {
 
                 <div className="flex items-center justify-between text-xs text-slate-400">
                     <span>
-                        {isSaving ? "Saving…" : showInvalid ? "Title cannot be empty" : "Drag to move"}
+                        {showInvalid ? "Title cannot be empty" : "Drag to move"}
                     </span>
                     {project.created_by_admin ? <span className="text-slate-500">Assigned</span> : null}
+                </div>
+
+                <div className="mt-3">
+                    <button
+                        disabled={isDisabled || !validation.success || isSaving}
+                        onClick={() => save()}
+                        className={`w-full rounded-xl border bg-slate-900/40 px-3 py-2 text-sm text-slate-100 outline-none transition focus:ring-2 focus:ring-indigo-400/20 disabled:cursor-not-allowed disabled:opacity-50 ${
+                            isSaving ? "border-indigo-400/60" : "border-white/10 hover:border-indigo-400/60"
+                        }`}
+                    >
+                        {isSaving ? "Saving…" : "Save Changes"}
+                    </button>
                 </div>
             </div>
         </div>
