@@ -40,10 +40,10 @@ export function UserList({ selectedUserId, onSelect, setKnownUsers }: Props) {
     const items = data?.items ?? [];
 
     useEffect(() => {
-        if(items){
-            setKnownUsers(items)
+        if(data?.items){
+            setKnownUsers(data.items)
         }
-    }, [data])
+    }, [data, setKnownUsers])
 
     const nextOffset = data?.nextOffset ?? null;
 

@@ -7,7 +7,7 @@ import { EmptyState } from "../../../components/ui/EmptyState";
 import { ProjectCard } from "./ProjectCard";
 import type { ShowToast } from "../../../App";
 import { useAppDispatch, useAppSelector } from "../../../store/hooks";
-import { endDrag, lockDnd, unlockDnd } from "../../../store/slices/dndSlice";
+import { endDrag } from "../../../store/slices/dndSlice";
 
 type Props = {
     assignedUserId: string;
@@ -74,7 +74,9 @@ export function ProjectColumn({ assignedUserId, isCompleted, title, showToast, o
             if (dragged.id !== draggingProjectId) return;
             if (dragged.is_completed === isCompleted) return;
 
-            dispatch(lockDnd(dragged.id));
+            // End drag operation immediately for better UX
+            dispatch(endDrag());
+            
             try {
                 await updateProject({
                     id: dragged.id,
@@ -84,12 +86,8 @@ export function ProjectColumn({ assignedUserId, isCompleted, title, showToast, o
                     "success",
                     isCompleted ? "Marked as completed." : "Moved back to in progress."
                 );
-            } catch (err) {
-                const message = (err as { data?: string })?.data ?? "Failed to update project";
-                showToast("error", message);
-            } finally {
-                dispatch(unlockDnd());
-                dispatch(endDrag());
+            } catch {
+                showToast("error", "Failed to update project status");
             }
         },
         [dispatch, draggingProjectId, isCompleted, locked, showToast, updateProject]

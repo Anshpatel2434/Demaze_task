@@ -5,7 +5,7 @@ import { Skeleton } from "../../../components/ui/Skeleton";
 import { EmptyState } from "../../../components/ui/EmptyState";
 import type { ShowToast } from "../../../App";
 import { useAppDispatch, useAppSelector } from "../../../store/hooks";
-import { lockDnd, unlockDnd } from "../../../store/slices/dndSlice";
+import { endDragUser } from "../../../store/slices/dndSlice";
 
 function findUserEmail(users: UserProfile[], id: string) {
     const email = users.find((u) => u.id === id)?.email
@@ -27,7 +27,7 @@ type ProjectSectionProps = {
 
 function ProjectSection({ title, isCompleted, knownUsers, showToast }: ProjectSectionProps) {
     const dispatch = useAppDispatch();
-    const { draggingUserId, locked } = useAppSelector((s) => s.dnd);
+    const { draggingUserId } = useAppSelector((s) => s.dnd);
     const [offset, setOffset] = useState(0);
 
     const args = useMemo(() => ({ offset, limit: PAGE_SIZE, isCompleted }), [offset, isCompleted]);
@@ -61,7 +61,7 @@ function ProjectSection({ title, isCompleted, knownUsers, showToast }: ProjectSe
     const onDrop = useCallback(
         async (e: React.DragEvent, project: Project) => {
             e.preventDefault();
-            if (!draggingUserId || locked) return;
+            if (!draggingUserId) return;
 
             const payload = e.dataTransfer.getData("application/json");
             if (!payload) return;
@@ -80,7 +80,9 @@ function ProjectSection({ title, isCompleted, knownUsers, showToast }: ProjectSe
                 return;
             }
 
-            dispatch(lockDnd(project.id));
+            // End drag operation immediately for better UX
+            dispatch(endDragUser());
+            
             try {
                 await updateProject({
                     id: project.id,
@@ -90,19 +92,17 @@ function ProjectSection({ title, isCompleted, knownUsers, showToast }: ProjectSe
             } catch (err) {
                 const message = (err as { data?: string })?.data ?? "Failed to assign project";
                 showToast("error", message);
-            } finally {
-                dispatch(unlockDnd());
             }
         },
-        [dispatch, draggingUserId, locked, isCompleted, showToast, updateProject]
+        [dispatch, draggingUserId, isCompleted, showToast, updateProject]
     );
 
     const onDragOver = useCallback((e: React.DragEvent) => {
-        if (!locked && draggingUserId && !isCompleted) {
+        if (draggingUserId && !isCompleted) {
             e.preventDefault();
             e.dataTransfer.dropEffect = "move";
         }
-    }, [locked, draggingUserId, isCompleted]);
+    }, [draggingUserId, isCompleted]);
 
     return (
         <div className="flex h-full flex-col">
@@ -150,7 +150,7 @@ function ProjectSection({ title, isCompleted, knownUsers, showToast }: ProjectSe
                         onDragOver={onDragOver}
                         onDrop={(e) => onDrop(e, p)}
                         className={`group relative rounded-xl border bg-white p-4 shadow-sm transition ${
-                            !isCompleted && draggingUserId && !locked
+                            !isCompleted && draggingUserId
                                 ? "border-blue-400 hover:border-blue-500 hover:shadow-md"
                                 : "border-gray-200"
                         }`}
@@ -175,7 +175,7 @@ function ProjectSection({ title, isCompleted, knownUsers, showToast }: ProjectSe
                             <p className="text-xs text-gray-500">
                                 Assigned: <span className="font-medium text-gray-700">{findUserEmail(knownUsers, p.assigned_user_id)}</span>
                             </p>
-                            {!isCompleted && draggingUserId && !locked && (
+                            {!isCompleted && draggingUserId && (
                                 <span className="text-xs text-blue-600">Drop to assign</span>
                             )}
                         </div>
