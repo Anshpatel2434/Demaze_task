@@ -103,7 +103,7 @@ export function UserList({ selectedUserId, onSelect }: Props) {
                 <EmptyState title="No users found" description="Try a different email search." />
             ) : null}
 
-            <ul className="max-h-[360px] space-y-2 overflow-auto pr-1">
+            <ul className="max-h-[360px] overflow-y-auto pr-1 space-y-2">
                 {items.map((u) => {
                     const selected = u.id === selectedUserId;
                     const isDragging = draggingUserId === u.id;

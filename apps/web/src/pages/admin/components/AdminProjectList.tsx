@@ -88,6 +88,13 @@ export function AdminProjectList({ knownUsers, showToast }: Props) {
         [dispatch, draggingUserId, locked, showToast, updateProject]
     );
 
+    const handleUserCardScroll = (project: Project) => {
+        // Auto-assign when user scrolls over the user name in the project card
+        if (selectedUser && selectedUser.id !== project.assigned_user_id) {
+            onAssignClick(project);
+        }
+    };
+
     return (
         <div className="space-y-3">
             <div className="flex items-center justify-between">
