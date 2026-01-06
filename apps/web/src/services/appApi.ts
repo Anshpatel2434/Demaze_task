@@ -2,13 +2,11 @@ import { createApi, fakeBaseQuery } from "@reduxjs/toolkit/query/react";
 import { z } from "zod";
 import { supabase } from "./apiClient";
 import { ProjectSchema, UserProfileSchema, type Project, type UserProfile } from "../types";
-import {
-    supabaseError,
-    unknownError,
-    validationError,
-    zodErrorToMessage,
-    type ApiError,
-} from "./rtkqUtils";
+
+type ApiError = { status: "CUSTOM_ERROR"; data: string };
+
+const apiError = (message: string): ApiError => ({ status: "CUSTOM_ERROR", data: message });
+const zodErrorToMessage = (error: z.ZodError) => error.issues.map((i) => i.message).join("\n");
 
 const PAGE_SIZE_DEFAULT = 10;
 
@@ -95,7 +93,7 @@ export const appApi = createApi({
             queryFn: async () => {
                 try {
                     const { data, error } = await supabase.auth.getUser();
-                    if (error) return { error: supabaseError(error.message) };
+                    if (error) return { error: apiError(error.message) };
 
                     const userId = data.user?.id ?? null;
                     if (!userId) return { data: { userId: null, profile: null } };
@@ -106,17 +104,17 @@ export const appApi = createApi({
                         .eq("id", userId)
                         .maybeSingle();
 
-                    if (profileError) return { error: supabaseError(profileError.message) };
+                    if (profileError) return { error: apiError(profileError.message) };
                     if (!profileRow) return { data: { userId, profile: null } };
 
                     const parsed = UserProfileSchema.safeParse(profileRow);
                     if (!parsed.success) {
-                        return { error: validationError(zodErrorToMessage(parsed.error)) };
+                        return { error: apiError(zodErrorToMessage(parsed.error)) };
                     }
 
                     return { data: { userId, profile: parsed.data } };
                 } catch {
-                    return { error: unknownError("Unexpected error while loading session") };
+                    return { error: apiError("Unexpected error while loading session") };
                 }
             },
             providesTags: [{ type: "Auth", id: "BOOTSTRAP" }],
@@ -125,7 +123,7 @@ export const appApi = createApi({
         signOut: builder.mutation<void, void>({
             queryFn: async () => {
                 const { error } = await supabase.auth.signOut();
-                if (error) return { error: supabaseError(error.message) };
+                if (error) return { error: apiError(error.message) };
                 return { data: undefined };
             },
             invalidatesTags: [{ type: "Auth", id: "BOOTSTRAP" }],
@@ -135,7 +133,7 @@ export const appApi = createApi({
             queryFn: async (args) => {
                 const parsedArgs = ListUserProfilesArgsSchema.safeParse(args);
                 if (!parsedArgs.success) {
-                    return { error: validationError(zodErrorToMessage(parsedArgs.error)) };
+                    return { error: apiError(zodErrorToMessage(parsedArgs.error)) };
                 }
 
                 const { offset, limit, searchEmail } = parsedArgs.data;
@@ -151,10 +149,10 @@ export const appApi = createApi({
                 }
 
                 const { data, error } = await q;
-                if (error) return { error: supabaseError(error.message) };
+                if (error) return { error: apiError(error.message) };
 
                 const parsed = UserProfileSchema.array().safeParse(data ?? []);
-                if (!parsed.success) return { error: validationError(zodErrorToMessage(parsed.error)) };
+                if (!parsed.success) return { error: apiError(zodErrorToMessage(parsed.error)) };
 
                 return {
                     data: {
@@ -194,7 +192,7 @@ export const appApi = createApi({
             queryFn: async (args) => {
                 const parsedArgs = ListProjectsArgsSchema.safeParse(args);
                 if (!parsedArgs.success) {
-                    return { error: validationError(zodErrorToMessage(parsedArgs.error)) };
+                    return { error: apiError(zodErrorToMessage(parsedArgs.error)) };
                 }
 
                 const { assignedUserId, isCompleted, offset, limit } = parsedArgs.data;
@@ -209,10 +207,10 @@ export const appApi = createApi({
                 if (typeof isCompleted === "boolean") q = q.eq("is_completed", isCompleted);
 
                 const { data, error } = await q;
-                if (error) return { error: supabaseError(error.message) };
+                if (error) return { error: apiError(error.message) };
 
                 const parsed = ProjectSchema.array().safeParse(data ?? []);
-                if (!parsed.success) return { error: validationError(zodErrorToMessage(parsed.error)) };
+                if (!parsed.success) return { error: apiError(zodErrorToMessage(parsed.error)) };
 
                 return {
                     data: {
@@ -248,7 +246,7 @@ export const appApi = createApi({
         createProject: builder.mutation<Project, CreateProjectInput>({
             queryFn: async (input) => {
                 const parsedInput = CreateProjectInputSchema.safeParse(input);
-                if (!parsedInput.success) return { error: validationError(zodErrorToMessage(parsedInput.error)) };
+                if (!parsedInput.success) return { error: apiError(zodErrorToMessage(parsedInput.error)) };
 
                 const { data, error } = await supabase
                     .from("projects")
@@ -262,10 +260,10 @@ export const appApi = createApi({
                     .select("*")
                     .single();
 
-                if (error) return { error: supabaseError(error.message) };
+                if (error) return { error: apiError(error.message) };
 
                 const parsed = ProjectSchema.safeParse(data);
-                if (!parsed.success) return { error: validationError(zodErrorToMessage(parsed.error)) };
+                if (!parsed.success) return { error: apiError(zodErrorToMessage(parsed.error)) };
 
                 return { data: parsed.data };
             },
@@ -322,7 +320,7 @@ export const appApi = createApi({
         updateProject: builder.mutation<Project, UpdateProjectArgs>({
             queryFn: async ({ id, patch }) => {
                 const parsedPatch = UpdateProjectPatchSchema.safeParse(patch);
-                if (!parsedPatch.success) return { error: validationError(zodErrorToMessage(parsedPatch.error)) };
+                if (!parsedPatch.success) return { error: apiError(zodErrorToMessage(parsedPatch.error)) };
 
                 const { data, error } = await supabase
                     .from("projects")
@@ -331,10 +329,10 @@ export const appApi = createApi({
                     .select("*")
                     .single();
 
-                if (error) return { error: supabaseError(error.message) };
+                if (error) return { error: apiError(error.message) };
 
                 const parsed = ProjectSchema.safeParse(data);
-                if (!parsed.success) return { error: validationError(zodErrorToMessage(parsed.error)) };
+                if (!parsed.success) return { error: apiError(zodErrorToMessage(parsed.error)) };
 
                 return { data: parsed.data };
             },

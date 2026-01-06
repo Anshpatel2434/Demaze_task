@@ -1,21 +1,24 @@
-import { addToast, type ToastVariant } from "../store/slices/toastSlice";
-import { useAppDispatch } from "../store/hooks";
+import { useMemo } from "react";
+import { useToastContext, type ToastVariant } from "../components/toast/toastContext";
 
 export function useToast() {
-	const dispatch = useAppDispatch();
+    const { add } = useToastContext();
 
-	return {
-		push: (variant: ToastVariant, message: string, dedupeKey?: string) => {
-			dispatch(addToast({ variant, message, dedupeKey }));
-		},
-		success: (message: string, dedupeKey?: string) => {
-			dispatch(addToast({ variant: "success", message, dedupeKey }));
-		},
-		error: (message: string, dedupeKey?: string) => {
-			dispatch(addToast({ variant: "error", message, dedupeKey }));
-		},
-		info: (message: string, dedupeKey?: string) => {
-			dispatch(addToast({ variant: "info", message, dedupeKey }));
-		},
-	};
+    return useMemo(
+        () => ({
+            push: (variant: ToastVariant, message: string, dedupeKey?: string) => {
+                add({ variant, message, dedupeKey });
+            },
+            success: (message: string, dedupeKey?: string) => {
+                add({ variant: "success", message, dedupeKey });
+            },
+            error: (message: string, dedupeKey?: string) => {
+                add({ variant: "error", message, dedupeKey });
+            },
+            info: (message: string, dedupeKey?: string) => {
+                add({ variant: "info", message, dedupeKey });
+            },
+        }),
+        [add]
+    );
 }

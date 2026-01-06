@@ -6,8 +6,12 @@ type Params = {
     rootMargin?: string;
 };
 
-export function useInfiniteScroll({ enabled, onLoadMore, rootMargin = "200px" }: Params) {
-    const ref = useRef<HTMLElement | null>(null);
+export function useInfiniteScroll<T extends Element = HTMLDivElement>({
+    enabled,
+    onLoadMore,
+    rootMargin = "200px",
+}: Params) {
+    const ref = useRef<T | null>(null);
 
     useEffect(() => {
         if (!enabled) return;

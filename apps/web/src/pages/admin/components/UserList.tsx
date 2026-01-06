@@ -27,7 +27,7 @@ export function UserList({ selectedUserId, onSelect }: Props) {
     const nextOffset = data?.nextOffset ?? null;
 
     const canLoadMore = Boolean(nextOffset) && !isFetching;
-    const sentinelRef = useInfiniteScroll({
+    const sentinelRef = useInfiniteScroll<HTMLLIElement>({
         enabled: canLoadMore,
         onLoadMore: () => {
             if (nextOffset == null) return;
