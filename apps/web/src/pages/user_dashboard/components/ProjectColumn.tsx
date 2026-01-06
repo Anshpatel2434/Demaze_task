@@ -78,7 +78,6 @@ export function ProjectColumn({ assignedUserId, isCompleted, title, showToast }:
                 await updateProject({
                     id: dragged.id,
                     patch: { is_completed: isCompleted },
-                    optimisticProject: dragged,
                 }).unwrap();
                 showToast(
                     "success",

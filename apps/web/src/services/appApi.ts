@@ -63,16 +63,6 @@ export type UpdateProjectPatch = z.infer<typeof UpdateProjectPatchSchema>;
 export type UpdateProjectArgs = {
     id: string;
     patch: UpdateProjectPatch;
-    optimisticProject?: Pick<
-        Project,
-        | "assigned_user_id"
-        | "is_completed"
-        | "title"
-        | "description"
-        | "created_by_admin"
-        | "created_at"
-        | "updated_at"
-    >;
 };
 
 function uniqueById<T extends { id: string }>(items: T[]) {
@@ -239,7 +229,8 @@ export const appApi = createApi({
                 );
             },
             providesTags: (result) => {
-                return (result?.items ?? []).map((p) => ({ type: "Project" as const, id: p.id }));
+                const itemTags = (result?.items ?? []).map((p) => ({ type: "Project" as const, id: p.id }));
+                return [...itemTags, { type: "Project" as const, id: "LIST" }];
             },
         }),
 
@@ -267,54 +258,7 @@ export const appApi = createApi({
 
                 return { data: parsed.data };
             },
-            async onQueryStarted(input, { dispatch, queryFulfilled }) {
-                const tempId = globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random()}`;
-                const optimisticProject: Project = {
-                    id: tempId,
-                    assigned_user_id: input.assigned_user_id,
-                    title: input.title,
-                    description: input.description ?? null,
-                    is_completed: false,
-                    created_by_admin: true,
-                    created_at: new Date().toISOString(),
-                    updated_at: new Date().toISOString(),
-                };
-
-                let patch: { undo: () => void } | null = null;
-                try {
-                    patch = dispatch(
-                        appApi.util.updateQueryData(
-                            "listProjects",
-                            { offset: 0, limit: PAGE_SIZE_DEFAULT },
-                            (draft) => {
-                                draft.items = uniqueById([optimisticProject, ...draft.items]);
-                            }
-                        )
-                    );
-                } catch {
-                    patch = null;
-                }
-
-                try {
-                    const { data } = await queryFulfilled;
-                    try {
-                        dispatch(
-                            appApi.util.updateQueryData(
-                                "listProjects",
-                                { offset: 0, limit: PAGE_SIZE_DEFAULT },
-                                (draft) => {
-                                    draft.items = uniqueById([data, ...draft.items.filter((p) => p.id !== tempId)]);
-                                }
-                            )
-                        );
-                    } catch {
-                        // no cache entry
-                    }
-                } catch {
-                    patch?.undo();
-                }
-            },
-            invalidatesTags: (result) => (result ? [{ type: "Project", id: result.id }] : []),
+            invalidatesTags: [{ type: "Project", id: "LIST" }],
         }),
 
         updateProject: builder.mutation<Project, UpdateProjectArgs>({
@@ -336,90 +280,10 @@ export const appApi = createApi({
 
                 return { data: parsed.data };
             },
-            async onQueryStarted({ id, patch, optimisticProject }, { dispatch, queryFulfilled }) {
-                const previousAssignedUserId = optimisticProject?.assigned_user_id;
-                const previousCompleted = optimisticProject?.is_completed;
-
-                const nextAssignedUserId = patch.assigned_user_id ?? previousAssignedUserId;
-                const nextCompleted = patch.is_completed ?? previousCompleted;
-
-                const optimisticPatches: { undo: () => void }[] = [];
-
-                const applyToList = (args: ListProjectsArgs, updater: (draft: Paginated<Project>) => void) => {
-                    try {
-                        const pr = dispatch(appApi.util.updateQueryData("listProjects", args, updater));
-                        optimisticPatches.push(pr);
-                    } catch {
-                        // no cache entry
-                    }
-                };
-
-                const applyUpdate = (draft: Paginated<Project>) => {
-                    const idx = draft.items.findIndex((p) => p.id === id);
-                    if (idx === -1) return;
-                    draft.items[idx] = { ...draft.items[idx], ...patch, updated_at: new Date().toISOString() };
-                };
-
-                applyToList({ offset: 0, limit: PAGE_SIZE_DEFAULT }, applyUpdate);
-
-                if (previousAssignedUserId) {
-                    applyToList(
-                        { assignedUserId: previousAssignedUserId, isCompleted: false, offset: 0, limit: PAGE_SIZE_DEFAULT },
-                        (draft) => {
-                            if (nextCompleted === true) {
-                                draft.items = draft.items.filter((p) => p.id !== id);
-                                return;
-                            }
-                            applyUpdate(draft);
-                        }
-                    );
-                    applyToList(
-                        { assignedUserId: previousAssignedUserId, isCompleted: true, offset: 0, limit: PAGE_SIZE_DEFAULT },
-                        (draft) => {
-                            if (nextCompleted === false) {
-                                draft.items = draft.items.filter((p) => p.id !== id);
-                                return;
-                            }
-                            applyUpdate(draft);
-                        }
-                    );
-                }
-
-                if (nextAssignedUserId && nextAssignedUserId === previousAssignedUserId && previousCompleted !== nextCompleted) {
-                    const toArgs: ListProjectsArgs = {
-                        assignedUserId: nextAssignedUserId,
-                        isCompleted: Boolean(nextCompleted),
-                        offset: 0,
-                        limit: PAGE_SIZE_DEFAULT,
-                    };
-
-                    applyToList(toArgs, (draft) => {
-                        const exists = draft.items.some((p) => p.id === id);
-                        if (exists) {
-                            applyUpdate(draft);
-                            return;
-                        }
-                        const base: Project = {
-                            id,
-                            assigned_user_id: nextAssignedUserId,
-                            title: optimisticProject?.title ?? "",
-                            description: optimisticProject?.description ?? null,
-                            is_completed: Boolean(nextCompleted),
-                            created_by_admin: optimisticProject?.created_by_admin ?? true,
-                            created_at: optimisticProject?.created_at ?? new Date().toISOString(),
-                            updated_at: new Date().toISOString(),
-                        };
-                        draft.items = uniqueById([{ ...base, ...patch }, ...draft.items]);
-                    });
-                }
-
-                try {
-                    await queryFulfilled;
-                } catch {
-                    optimisticPatches.forEach((p) => p.undo());
-                }
-            },
-            invalidatesTags: (_result, _error, args) => [{ type: "Project", id: args.id }],
+            invalidatesTags: (_result, _error, args) => [
+                { type: "Project", id: args.id },
+                { type: "Project", id: "LIST" },
+            ],
         }),
     }),
 });
