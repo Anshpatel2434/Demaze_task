@@ -60,10 +60,10 @@ export const AuthPage = ({ showToast }: Props) => {
         <div className="mx-auto flex min-h-dvh w-full max-w-md items-center px-5 py-10">
             <div className="w-full space-y-4">
                 <div className="space-y-1 text-center">
-                    <h1 className="text-2xl font-semibold tracking-tight text-slate-100">
+                    <h1 className="text-2xl font-semibold tracking-tight text-gray-900">
                         {isLoginMode ? "Sign in" : "Create your account"}
                     </h1>
-                    <p className="text-sm text-slate-400">
+                    <p className="text-sm text-gray-500">
                         {isLoginMode
                             ? "Use your email and password to continue."
                             : "Create an account to receive and manage your assigned projects."}
@@ -108,7 +108,7 @@ export const AuthPage = ({ showToast }: Props) => {
 
                         <div className="relative py-2">
                             <div className="absolute inset-0 flex items-center">
-                                <div className="w-full border-t border-white/10" />
+                                <div className="w-full border-t border-gray-200" />
                             </div>
                         </div>
                     </form>
@@ -118,7 +118,7 @@ export const AuthPage = ({ showToast }: Props) => {
                     <button
                         type="button"
                         onClick={() => setIsLoginMode((v) => !v)}
-                        className="text-sm text-slate-300 hover:text-white focus:outline-none focus:ring-2 focus:ring-white/20"
+                        className="text-sm text-gray-600 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-300"
                         disabled={isLoading}
                     >
                         {isLoginMode ? "Need an account? Sign up" : "Already have an account? Sign in"}

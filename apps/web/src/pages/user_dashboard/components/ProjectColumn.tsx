@@ -14,9 +14,10 @@ type Props = {
     isCompleted: boolean;
     title: string;
     showToast: ShowToast;
+    onEditProject: (project: Project) => void;
 };
 
-export function ProjectColumn({ assignedUserId, isCompleted, title, showToast }: Props) {
+export function ProjectColumn({ assignedUserId, isCompleted, title, showToast, onEditProject }: Props) {
     const dispatch = useAppDispatch();
     const { draggingProjectId, locked } = useAppSelector((s) => s.dnd);
 
@@ -46,7 +47,7 @@ export function ProjectColumn({ assignedUserId, isCompleted, title, showToast }:
                 if (nextOffset == null) return;
                 setOffset(nextOffset);
             },
-            { root: null, rootMargin: "200px" }
+            { root: sentinelRef.current?.parentElement, rootMargin: "200px" }
         );
 
         observer.observe(el);
@@ -100,58 +101,64 @@ export function ProjectColumn({ assignedUserId, isCompleted, title, showToast }:
                 if (!locked) e.preventDefault();
             }}
             onDrop={onDrop}
-            className="flex min-h-[520px] flex-col gap-3 rounded-2xl border border-white/10 bg-slate-950/20 p-4"
+            className="flex h-full flex-col rounded-xl border border-gray-200 bg-white"
         >
-            <div className="flex items-center justify-between">
-                <h2 className="text-sm font-semibold text-slate-100">{title}</h2>
-                <p className="text-xs text-slate-400">{items.length}</p>
+            <div className="border-b border-gray-200 bg-gray-50 px-4 py-3">
+                <div className="flex items-center justify-between">
+                    <h2 className="text-sm font-semibold text-gray-700">{title}</h2>
+                    <span className="rounded-full bg-gray-200 px-2 py-1 text-xs font-medium text-gray-600">
+                        {items.length}
+                    </span>
+                </div>
             </div>
 
-            {isLoading ? (
-                <div className="space-y-3">
-                    {Array.from({ length: 4 }).map((_, idx) => (
-                        <Skeleton key={idx} className="h-36 w-full" />
+            <div className="flex flex-1 flex-col overflow-auto p-4">
+                {isLoading ? (
+                    <div className="space-y-3">
+                        {Array.from({ length: 4 }).map((_, idx) => (
+                            <Skeleton key={idx} className="h-24 w-full" />
+                        ))}
+                    </div>
+                ) : null}
+
+                {isError ? (
+                    <EmptyState
+                        title="Couldn't load projects"
+                        description="Please check your connection and retry."
+                        action={
+                            <button
+                                onClick={() => refetch()}
+                                className="rounded-xl border border-gray-300 bg-white px-4 py-2 text-sm text-gray-900 hover:bg-gray-50"
+                            >
+                                Retry
+                            </button>
+                        }
+                    />
+                ) : null}
+
+                {!isLoading && !isError && items.length === 0 ? (
+                    <EmptyState
+                        title="No projects"
+                        description={isCompleted ? "Drop a project here when you're done." : "You're all caught up."}
+                    />
+                ) : null}
+
+                <div className="flex flex-1 flex-col gap-3">
+                    {items.map((p) => (
+                        <ProjectCard key={p.id} project={p} disabled={locked} onEdit={onEditProject} />
                     ))}
                 </div>
-            ) : null}
 
-            {isError ? (
-                <EmptyState
-                    title="Couldn't load projects"
-                    description="Please check your connection and retry."
-                    action={
-                        <button
-                            onClick={() => refetch()}
-                            className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-slate-100 hover:bg-white/10"
-                        >
-                            Retry
-                        </button>
-                    }
-                />
-            ) : null}
+                <div ref={sentinelRef} />
 
-            {!isLoading && !isError && items.length === 0 ? (
-                <EmptyState
-                    title="No projects"
-                    description={isCompleted ? "Drop a project here when you're done." : "You're all caught up."}
-                />
-            ) : null}
-
-            <div className="flex flex-col gap-3">
-                {items.map((p) => (
-                    <ProjectCard key={p.id} project={p} disabled={locked} showToast={showToast} />
-                ))}
+                {isFetching && !isLoading ? (
+                    <div className="space-y-3">
+                        {Array.from({ length: 2 }).map((_, idx) => (
+                            <Skeleton key={idx} className="h-24 w-full" />
+                        ))}
+                    </div>
+                ) : null}
             </div>
-
-            <div ref={sentinelRef} />
-
-            {isFetching && !isLoading ? (
-                <div className="space-y-3">
-                    {Array.from({ length: 2 }).map((_, idx) => (
-                        <Skeleton key={idx} className="h-36 w-full" />
-                    ))}
-                </div>
-            ) : null}
         </section>
     );
 }
