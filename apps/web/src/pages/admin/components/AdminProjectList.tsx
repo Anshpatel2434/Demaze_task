@@ -122,7 +122,7 @@ export function AdminProjectList({ knownUsers, showToast }: Props) {
                 <EmptyState title="No projects" description="Create a project to get started." />
             ) : null}
 
-            <div className="space-y-3">
+            <div className="space-y-3 max-h-screen overflow-y-auto">
                 {items.map((p) => {
                     const isUpdating = updatingProjectId === p.id;
                     const isDropTarget = draggingUserId !== null && !locked;
@@ -176,12 +176,12 @@ export function AdminProjectList({ knownUsers, showToast }: Props) {
                                     <p className="text-xs text-indigo-300">Drop user to assign</p>
                                 ) : null}
                             </div>
+                            <div ref={sentinelRef} />
                         </div>
                     );
                 })}
             </div>
 
-            <div ref={sentinelRef} />
 
             {isFetching && !isLoading ? (
                 <div className="space-y-3">

@@ -138,13 +138,13 @@ export function ProjectColumn({ assignedUserId, isCompleted, title, showToast }:
                 />
             ) : null}
 
-            <div className="flex flex-col gap-3">
+            <div className="flex flex-col gap-3 max-h-screen overflow-y-auto">
                 {items.map((p) => (
                     <ProjectCard key={p.id} project={p} disabled={locked} showToast={showToast} />
                 ))}
+            <div ref={sentinelRef} />
             </div>
 
-            <div ref={sentinelRef} />
 
             {isFetching && !isLoading ? (
                 <div className="space-y-3">
