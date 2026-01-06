@@ -1,27 +1,28 @@
 import { supabase } from "../../../services/apiClient";
+import { useToast } from "../../../hooks/useToast";
+import { Button } from "../../../components/ui/Button";
 
-export const LoginButton = () => {
-	const handleGoogleLogin = async () => {
-		//1. Invoke Supabase's built-in OAuth method
-		const { error } = await supabase.auth.signInWithOAuth({
-			provider: "google",
-			options: {
-				//this tells supabase where to send the user after they successfully login on Google's page
-				redirectTo: window.location.origin,
-			},
-		});
+type Props = {
+    disabled?: boolean;
+};
 
-		if (error) {
-			console.error("Error logging in: ", error.message);
-		}
-	};
+export const LoginButton = ({ disabled }: Props) => {
+    const toast = useToast();
 
-	return (
-		<button
-			onClick={handleGoogleLogin}
-			className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-2xl"
-		>
-			Sign in with Google
-		</button>
-	);
+    const handleGoogleLogin = async () => {
+        const { error } = await supabase.auth.signInWithOAuth({
+            provider: "google",
+            options: {
+                redirectTo: window.location.origin,
+            },
+        });
+
+        if (error) toast.error(error.message, `oauth:${error.message}`);
+    };
+
+    return (
+        <Button type="button" variant="secondary" onClick={handleGoogleLogin} disabled={disabled}>
+            Continue with Google
+        </Button>
+    );
 };

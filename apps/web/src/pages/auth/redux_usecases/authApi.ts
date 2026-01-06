@@ -1,52 +1,46 @@
 import { createApi, fakeBaseQuery } from "@reduxjs/toolkit/query/react";
+import { z } from "zod";
 import { supabase } from "../../../services/apiClient";
+import { supabaseError, type ApiError } from "../../../services/rtkqUtils";
 
-//We define the shape of the data we expect from the form
-interface AuthCredentials{
-    email: string;
-    password: string;
-}
+type AuthCredentials = {
+	email: string;
+	password: string;
+};
+
+const AuthResultSchema = z.object({
+	userId: z.string(),
+});
+
+type AuthResult = z.infer<typeof AuthResultSchema>;
 
 export const authApi = createApi({
-    reducerPath: 'authApi',
-    baseQuery: fakeBaseQuery(),
-    endpoints: (builder) => ({
-        //endpoint 1: Sign Up (Mutation)
-        signUp: builder.mutation<any, AuthCredentials>({
-            queryFn: async ({email, password}) => {
-                const {data, error} = await supabase.auth.signUp({
-                    email, 
-                    password
-                });
-                if(error) return {error : {status: 'CUSTOM_ERROR', data: error.message}}
-                return {data}
-            }
-        }),
+	reducerPath: "authApi",
+	baseQuery: fakeBaseQuery<ApiError>(),
+	endpoints: (builder) => ({
+		signUp: builder.mutation<AuthResult, AuthCredentials>({
+			queryFn: async ({ email, password }) => {
+				const { data, error } = await supabase.auth.signUp({ email, password });
+				if (error) return { error: supabaseError(error.message) };
 
-        //Endpoint 2: Login (Mutation)
-        login: builder.mutation<any, AuthCredentials>({
-            queryFn: async({email, password}) => {
-                const {data, error} = await supabase.auth.signInWithPassword({
-                    email,
-                    password
-                })
-                if (error) return {error: {status: 'CUSTOM_ERROR', data: error.message}}
-                return {data}
-            }
-        }),
+				const userId = data.user?.id;
+				if (!userId) return { error: supabaseError("No user returned from sign up") };
 
-        //endpoint 3: to get the current user
-        fetchUser: builder.query<any, void>({
-            queryFn: async() => {
-                const {data, error} = await supabase.auth.getUser()
-                if(error) return {error: {status: 'CUSTOM_ERROR', data: error.message}}
+				return { data: AuthResultSchema.parse({ userId }) };
+			},
+		}),
+		login: builder.mutation<AuthResult, AuthCredentials>({
+			queryFn: async ({ email, password }) => {
+				const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+				if (error) return { error: supabaseError(error.message) };
 
-                return {data}
-            }
-        }) 
-    })
-})
+				const userId = data.user?.id;
+				if (!userId) return { error: supabaseError("No user returned from sign in") };
 
-//Auto-generated hooks for mutation
-//Notice the naming convention: use + Name + Mutation
-export const {useSignUpMutation, useLoginMutation, useFetchUserQuery} = authApi
+				return { data: AuthResultSchema.parse({ userId }) };
+			},
+		}),
+	}),
+});
+
+export const { useSignUpMutation, useLoginMutation } = authApi;
