@@ -77,14 +77,14 @@ export function EditProjectModal({ isOpen, onClose, project, showToast }: Props)
                     disabled={isLoading}
                 />
 
-                <div className="rounded-xl border border-white/10 bg-slate-950/30 p-3 text-sm">
+                <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm">
                     <div className="flex items-center justify-between">
-                        <span className="text-slate-400">Status:</span>
+                        <span className="text-slate-600">Status:</span>
                         <span
                             className={`rounded-full px-2 py-1 text-xs ${
                                 project.is_completed
-                                    ? "bg-emerald-500/15 text-emerald-200"
-                                    : "bg-amber-500/15 text-amber-200"
+                                    ? "bg-emerald-100 text-emerald-800"
+                                    : "bg-amber-100 text-amber-800"
                             }`}
                         >
                             {project.is_completed ? "Completed" : "In progress"}

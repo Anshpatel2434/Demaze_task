@@ -93,19 +93,11 @@ export function AdminProjectList({ knownUsers, showToast }: Props) {
     );
 
     return (
-        <div ref={scrollContainerRef} className="space-y-3 overflow-y-auto">
+        <div className="flex min-h-0 flex-1 flex-col gap-2">
             <div className="flex items-center justify-between">
-                <h2 className="text-sm font-semibold text-slate-100">Projects</h2>
-                <p className="text-xs text-slate-400">{items.length}</p>
+                <h2 className="text-xs font-semibold text-slate-700">Projects</h2>
+                <p className="text-xs text-slate-500">{items.length}</p>
             </div>
-
-            {isLoading ? (
-                <div className="space-y-3">
-                    {Array.from({ length: 5 }).map((_, idx) => (
-                        <Skeleton key={idx} className="h-28 w-full" />
-                    ))}
-                </div>
-            ) : null}
 
             {isError ? (
                 <EmptyState
@@ -114,7 +106,7 @@ export function AdminProjectList({ knownUsers, showToast }: Props) {
                     action={
                         <button
                             onClick={() => refetch()}
-                            className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-slate-100 hover:bg-white/10"
+                            className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-50"
                         >
                             Retry
                         </button>
@@ -126,84 +118,90 @@ export function AdminProjectList({ knownUsers, showToast }: Props) {
                 <EmptyState title="No projects" description="Create a project to get started." />
             ) : null}
 
-            <div className="flex-1 space-y-3 overflow-y-auto">
-                {items.map((p) => {
-                    const isUpdating = updatingProjectId === p.id;
-                    const isDropTarget = draggingUserId !== null && !locked;
+            <div ref={scrollContainerRef} className="min-h-0 flex-1 overflow-y-auto pr-1">
+                <div className="grid gap-3 sm:grid-cols-2">
+                    {isLoading
+                        ? Array.from({ length: 6 }).map((_, idx) => (
+                              <Skeleton key={idx} className="h-24 w-full" />
+                          ))
+                        : items.map((p) => {
+                              const isUpdating = updatingProjectId === p.id;
+                              const isDropTarget = draggingUserId !== null && !locked;
 
-                    return (
-                        <div
-                            key={p.id}
-                            onDragOver={(e) => {
-                                if (isDropTarget) e.preventDefault();
-                            }}
-                            onDrop={(e) => handleDrop(e, p)}
-                            onClick={() => setSelectedProject(p)}
-                            className={`relative cursor-pointer rounded-2xl border p-4 shadow-sm transition hover:border-indigo-400/40 ${
-                                isDropTarget
-                                    ? "border-indigo-400/60 bg-slate-950/60 ring-2 ring-indigo-400/20"
-                                    : "border-white/10 bg-slate-950/40"
-                            } ${locked ? "opacity-70" : ""}`}
-                        >
-                            {isUpdating ? (
-                                <div className="absolute inset-0 z-10 grid place-items-center rounded-2xl bg-slate-950/70">
-                                    <div className="flex items-center gap-2 text-sm text-slate-100">
-                                        <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
-                                        Assigning…
-                                    </div>
-                                </div>
-                            ) : null}
+                              return (
+                                  <div
+                                      key={p.id}
+                                      onDragOver={(e) => {
+                                          if (isDropTarget) e.preventDefault();
+                                      }}
+                                      onDrop={(e) => handleDrop(e, p)}
+                                      onClick={() => setSelectedProject(p)}
+                                      className={`relative cursor-pointer rounded-xl border p-3 transition ${
+                                          isDropTarget
+                                              ? "border-indigo-300 bg-indigo-50 ring-2 ring-indigo-400/10"
+                                              : "border-slate-200 bg-white hover:border-indigo-200"
+                                      } ${locked ? "opacity-70" : ""}`}
+                                  >
+                                      {isUpdating ? (
+                                          <div className="absolute inset-0 z-10 grid place-items-center rounded-xl bg-white/70">
+                                              <div className="flex items-center gap-2 text-sm text-slate-900">
+                                                  <span className="h-4 w-4 animate-spin rounded-full border-2 border-slate-900/20 border-t-slate-900" />
+                                                  Assigning…
+                                              </div>
+                                          </div>
+                                      ) : null}
 
-                            <div className="flex items-start justify-between gap-3">
-                                <div className="min-w-0">
-                                    <p className="truncate text-sm font-semibold text-slate-100">{p.title}</p>
-                                    <p className="mt-1 line-clamp-2 text-sm text-slate-400">
-                                        {p.description ?? "—"}
-                                    </p>
-                                </div>
-                                <span
-                                    className={`shrink-0 rounded-full px-2 py-1 text-xs ${
-                                        p.is_completed
-                                            ? "bg-emerald-500/15 text-emerald-200"
-                                            : "bg-amber-500/15 text-amber-200"
-                                    }`}
-                                >
-                                    {p.is_completed ? "Completed" : "In progress"}
-                                </span>
-                            </div>
+                                      <div className="flex items-start justify-between gap-3">
+                                          <div className="min-w-0">
+                                              <p className="truncate text-sm font-semibold text-slate-900">{p.title}</p>
+                                              <p className="mt-1 line-clamp-2 text-sm text-slate-600">{p.description ?? "—"}</p>
+                                          </div>
+                                          <span
+                                              className={`shrink-0 rounded-full px-2 py-1 text-xs ${
+                                                  p.is_completed
+                                                      ? "bg-emerald-100 text-emerald-800"
+                                                      : "bg-amber-100 text-amber-800"
+                                              }`}
+                                          >
+                                              {p.is_completed ? "Completed" : "In progress"}
+                                          </span>
+                                      </div>
 
-                            <div className="mt-3 flex items-center justify-between gap-3">
-                                <p className="text-xs text-slate-400">
-                                    Assigned:{" "}
-                                    <span className="text-slate-200">{findUserEmail(knownUsers, p.assigned_user_id)}</span>
-                                </p>
-                                {isDropTarget ? (
-                                    <p className="text-xs text-indigo-300">Drop user to assign</p>
-                                ) : null}
-                            </div>
-                        </div>
-                    );
-                })}
+                                      <div className="mt-2 flex items-center justify-between gap-3">
+                                          <p className="text-xs text-slate-500">
+                                              Assigned:{" "}
+                                              <span className="text-slate-700">
+                                                  {findUserEmail(knownUsers, p.assigned_user_id)}
+                                              </span>
+                                          </p>
+                                          {isDropTarget ? (
+                                              <p className="text-xs text-indigo-700">Drop user to assign</p>
+                                          ) : null}
+                                      </div>
+                                  </div>
+                              );
+                          })}
+                </div>
+
+                <div ref={sentinelRef} />
             </div>
 
-
             {isFetching && !isLoading ? (
-                <div className="space-y-3">
-                    {Array.from({ length: 2 }).map((_, idx) => (
-                        <Skeleton key={idx} className="h-28 w-full" />
+                <div className="grid gap-3 sm:grid-cols-2">
+                    {Array.from({ length: 4 }).map((_, idx) => (
+                        <Skeleton key={idx} className="h-24 w-full" />
                     ))}
                 </div>
             ) : null}
 
             {selectedProject && (
                 <EditProjectModal
-                isOpen={true}
-                onClose={() => setSelectedProject(null)}
-                project={selectedProject}
-                showToast={showToast}
+                    isOpen={true}
+                    onClose={() => setSelectedProject(null)}
+                    project={selectedProject}
+                    showToast={showToast}
                 />
             )}
-            <div ref={sentinelRef} />
         </div>
     );
 }

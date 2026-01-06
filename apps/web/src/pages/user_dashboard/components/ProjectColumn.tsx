@@ -103,17 +103,17 @@ export function ProjectColumn({ assignedUserId, isCompleted, title, showToast }:
                 if (!locked) e.preventDefault();
             }}
             onDrop={onDrop}
-            className="flex h-full flex-col gap-3 rounded-2xl border border-white/10 bg-slate-950/20 p-4 overflow-hidden"
+            className="flex h-full flex-col gap-2 rounded-xl border border-slate-200 bg-slate-50 p-3 overflow-hidden"
         >
             <div className="flex items-center justify-between shrink-0">
-                <h2 className="text-sm font-semibold text-slate-100">{title}</h2>
-                <p className="text-xs text-slate-400">{items.length}</p>
+                <h2 className="text-xs font-semibold text-slate-700">{title}</h2>
+                <p className="text-xs text-slate-500">{items.length}</p>
             </div>
 
             {isLoading ? (
-                <div className="space-y-3">
+                <div className="space-y-2">
                     {Array.from({ length: 4 }).map((_, idx) => (
-                        <Skeleton key={idx} className="h-36 w-full" />
+                        <Skeleton key={idx} className="h-28 w-full" />
                     ))}
                 </div>
             ) : null}
@@ -125,7 +125,7 @@ export function ProjectColumn({ assignedUserId, isCompleted, title, showToast }:
                     action={
                         <button
                             onClick={() => refetch()}
-                            className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-slate-100 hover:bg-white/10"
+                            className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-50"
                         >
                             Retry
                         </button>
@@ -140,7 +140,7 @@ export function ProjectColumn({ assignedUserId, isCompleted, title, showToast }:
                 />
             ) : null}
 
-            <div ref={scrollContainerRef} className="flex-1 flex flex-col gap-3 overflow-y-auto">
+            <div ref={scrollContainerRef} className="min-h-0 flex-1 flex flex-col gap-2 overflow-y-auto">
                 {items.map((p) => (
                     <ProjectCard key={p.id} project={p} disabled={locked} showToast={showToast} />
                 ))}
@@ -148,9 +148,9 @@ export function ProjectColumn({ assignedUserId, isCompleted, title, showToast }:
             </div>
 
             {isFetching && !isLoading ? (
-                <div className="space-y-3 shrink-0">
+                <div className="space-y-2 shrink-0">
                     {Array.from({ length: 2 }).map((_, idx) => (
-                        <Skeleton key={idx} className="h-36 w-full" />
+                        <Skeleton key={idx} className="h-28 w-full" />
                     ))}
                 </div>
             ) : null}

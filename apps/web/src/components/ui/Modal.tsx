@@ -28,18 +28,18 @@ export function Modal({ isOpen, onClose, title, children }: Props) {
 
     return (
         <div
-            className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-sm p-4"
+            className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 backdrop-blur-sm p-4"
             onClick={onClose}
         >
             <div
-                className="relative w-full max-w-lg rounded-2xl border border-white/10 bg-slate-900 p-6 shadow-2xl"
+                className="relative w-full max-w-lg rounded-xl border border-slate-200 bg-white p-6 shadow-2xl"
                 onClick={(e) => e.stopPropagation()}
             >
                 <div className="mb-4 flex items-center justify-between">
-                    <h2 className="text-lg font-semibold text-slate-100">{title}</h2>
+                    <h2 className="text-lg font-semibold text-slate-900">{title}</h2>
                     <button
                         onClick={onClose}
-                        className="rounded-lg p-1 text-slate-400 hover:bg-white/5 hover:text-slate-100 transition"
+                        className="rounded-lg p-1 text-slate-500 hover:bg-slate-900/5 hover:text-slate-900 transition"
                     >
                         <svg
                             className="h-5 w-5"

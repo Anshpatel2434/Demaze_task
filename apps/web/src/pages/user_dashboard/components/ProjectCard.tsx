@@ -31,41 +31,37 @@ export function ProjectCard({ project, disabled, showToast }: Props) {
                 }}
                 onDragEnd={() => dispatch(endDrag())}
                 onClick={() => !isDisabled && !isUpdating && setIsModalOpen(true)}
-                className={`group relative cursor-pointer rounded-2xl border border-white/10 bg-slate-950/40 p-4 shadow-sm transition hover:border-indigo-400/40 hover:bg-slate-950/60 ${
+                className={`group relative cursor-pointer rounded-xl border border-slate-200 bg-white p-3 shadow-sm transition hover:border-indigo-200 ${
                     isDisabled ? "opacity-70" : ""
                 }`}
             >
                 {isUpdating ? (
-                    <div className="absolute inset-0 z-10 grid place-items-center rounded-2xl bg-slate-950/70">
-                        <div className="flex items-center gap-2 text-sm text-slate-100">
-                            <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                    <div className="absolute inset-0 z-10 grid place-items-center rounded-xl bg-white/70">
+                        <div className="flex items-center gap-2 text-sm text-slate-900">
+                            <span className="h-4 w-4 animate-spin rounded-full border-2 border-slate-900/20 border-t-slate-900" />
                             Updating…
                         </div>
                     </div>
                 ) : null}
 
-                <div className="space-y-3">
+                <div className="space-y-2">
                     <div>
-                        <p className="text-xs font-semibold uppercase tracking-wide text-slate-400 mb-2">
+                        <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
                             Title
                         </p>
-                        <p className="text-sm font-medium text-slate-100">
-                            {project.title}
-                        </p>
+                        <p className="text-sm font-medium text-slate-900">{project.title}</p>
                     </div>
 
                     <div>
-                        <p className="text-xs font-semibold uppercase tracking-wide text-slate-400 mb-2">
+                        <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
                             Description
                         </p>
-                        <p className="text-sm text-slate-300 line-clamp-3">
-                            {project.description ?? "—"}
-                        </p>
+                        <p className="line-clamp-2 text-sm text-slate-700">{project.description ?? "—"}</p>
                     </div>
 
-                    <div className="flex items-center justify-between text-xs text-slate-400">
+                    <div className="flex items-center justify-between text-xs text-slate-500">
                         <span>Click to edit • Drag to move</span>
-                        {project.created_by_admin ? <span className="text-slate-500">Assigned</span> : null}
+                        {project.created_by_admin ? <span className="text-slate-400">Assigned</span> : null}
                     </div>
                 </div>
             </div>

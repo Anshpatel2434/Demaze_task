@@ -97,9 +97,9 @@ export function CreateProjectForm({ selectedUser, showToast }: Props) {
                 disabled={isLoading}
             />
 
-            <div className="rounded-xl border border-white/10 bg-slate-950/30 p-3 text-sm text-slate-300">
-                <p className="font-medium text-slate-100">Assigned user</p>
-                <p className="mt-1 text-sm text-slate-400">
+            <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700">
+                <p className="font-medium text-slate-900">Assigned user</p>
+                <p className="mt-1 text-sm text-slate-600">
                     {selectedUser ? selectedUser.email : "Select a user from the list to assign this project."}
                 </p>
             </div>

@@ -8,9 +8,9 @@ type Props = PropsWithChildren<{
 
 export function EmptyState({ title, description, action }: Props) {
     return (
-        <div className="rounded-2xl border border-white/10 bg-slate-950/30 p-6 text-center">
-            <p className="text-sm font-semibold text-slate-100">{title}</p>
-            {description ? <p className="mt-1 text-sm text-slate-400">{description}</p> : null}
+        <div className="rounded-xl border border-slate-200 bg-white p-5 text-center">
+            <p className="text-sm font-semibold text-slate-900">{title}</p>
+            {description ? <p className="mt-1 text-sm text-slate-500">{description}</p> : null}
             {action ? <div className="mt-4 flex justify-center">{action}</div> : null}
         </div>
     );

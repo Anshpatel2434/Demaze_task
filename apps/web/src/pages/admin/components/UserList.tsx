@@ -67,7 +67,7 @@ export function UserList({ selectedUserId, onSelect }: Props) {
     }, [canLoadMore, nextOffset]);
 
     return (
-        <div className="space-y-3">
+        <div className="flex min-h-0 flex-1 flex-col gap-2">
             <Input
                 label="Search users"
                 placeholder="Search by email…"
@@ -81,7 +81,7 @@ export function UserList({ selectedUserId, onSelect }: Props) {
             {isLoading ? (
                 <div className="space-y-2">
                     {Array.from({ length: 6 }).map((_, idx) => (
-                        <Skeleton key={idx} className="h-10 w-full" />
+                        <Skeleton key={idx} className="h-9 w-full" />
                     ))}
                 </div>
             ) : null}
@@ -93,7 +93,7 @@ export function UserList({ selectedUserId, onSelect }: Props) {
                     action={
                         <button
                             onClick={() => refetch()}
-                            className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-slate-100 hover:bg-white/10"
+                            className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-50"
                         >
                             Retry
                         </button>
@@ -105,7 +105,7 @@ export function UserList({ selectedUserId, onSelect }: Props) {
                 <EmptyState title="No users found" description="Try a different email search." />
             ) : null}
 
-            <ul ref={scrollContainerRef} className="flex-1 space-y-2 overflow-auto pr-1">
+            <ul ref={scrollContainerRef} className="min-h-0 flex-1 space-y-1 overflow-auto pr-1">
                 {items.map((u) => {
                     const selected = u.id === selectedUserId;
                     const isDragging = draggingUserId === u.id;
@@ -121,20 +121,20 @@ export function UserList({ selectedUserId, onSelect }: Props) {
                                 }}
                                 onDragEnd={() => dispatch(endDragUser())}
                                 onClick={() => onSelect(u)}
-                                className={`flex w-full items-center justify-between rounded-xl border px-3 py-2 text-left text-sm transition focus:outline-none focus:ring-2 focus:ring-indigo-400/20 ${
+                                className={`flex w-full items-center justify-between rounded-lg border px-3 py-1.5 text-left text-sm transition focus:outline-none focus:ring-2 focus:ring-indigo-400/15 ${
                                     selected
-                                        ? "border-indigo-400/60 bg-indigo-500/10"
-                                        : "border-white/10 bg-slate-950/30 hover:bg-slate-950/50"
+                                        ? "border-indigo-300 bg-indigo-50"
+                                        : "border-slate-200 bg-white hover:bg-slate-50"
                                 } ${locked ? "cursor-not-allowed opacity-70" : "cursor-grab"} ${
-                                    isDragging ? "ring-2 ring-indigo-400/30" : ""
+                                    isDragging ? "ring-2 ring-indigo-400/20" : ""
                                 }`}
                             >
                                 <div className="min-w-0">
-                                    <p className="truncate font-medium text-slate-100">{u.email}</p>
-                                    <p className="truncate text-xs text-slate-400">{u.full_name ?? "—"}</p>
+                                    <p className="truncate font-medium text-slate-900">{u.email}</p>
+                                    <p className="truncate text-xs text-slate-500">{u.full_name ?? "—"}</p>
                                 </div>
                                 {u.is_admin ? (
-                                    <span className="rounded-full bg-indigo-500/15 px-2 py-1 text-xs text-indigo-200">
+                                    <span className="rounded-full bg-indigo-100 px-2 py-0.5 text-xs text-indigo-800">
                                         Admin
                                     </span>
                                 ) : null}
@@ -148,7 +148,7 @@ export function UserList({ selectedUserId, onSelect }: Props) {
             {isFetching && !isLoading ? (
                 <div className="space-y-2">
                     {Array.from({ length: 2 }).map((_, idx) => (
-                        <Skeleton key={idx} className="h-10 w-full" />
+                        <Skeleton key={idx} className="h-9 w-full" />
                     ))}
                 </div>
             ) : null}

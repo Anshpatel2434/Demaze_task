@@ -21,13 +21,14 @@ const UserDashboard = ({ showToast }: Props) => {
 
     return (
         <div className="flex h-screen flex-col overflow-hidden">
-            <div className="shrink-0 px-6 pt-6">
+            <div className="shrink-0 px-5 pt-5">
                 <TopBar
                     title="Your Dashboard"
                     subtitle={subtitle}
                     actions={
                         <Button
                             variant="ghost"
+                            className="text-slate-200 hover:bg-white/10 focus:ring-white/20"
                             isLoading={isSigningOut}
                             onClick={async () => {
                                 try {
@@ -45,7 +46,7 @@ const UserDashboard = ({ showToast }: Props) => {
                 />
             </div>
 
-            <div className="flex-1 overflow-hidden px-6 pb-6 pt-4">
+            <div className="flex-1 overflow-hidden px-5 pb-5 pt-4">
                 {userId ? (
                     <div className="grid h-full gap-4 md:grid-cols-2">
                         <ProjectColumn assignedUserId={userId} isCompleted={false} title="In Progress" showToast={showToast} />

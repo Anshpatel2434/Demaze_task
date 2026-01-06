@@ -26,19 +26,16 @@ const AdminPage = ({ showToast }: Props) => {
 
     return (
         <div className="flex h-screen flex-col overflow-hidden">
-            <div className="shrink-0 px-6 pt-6">
+            <div className="shrink-0 px-5 pt-5">
                 <TopBar
                     title="Admin Dashboard"
                     subtitle={subtitle}
                     actions={
                         <div className="flex gap-2">
-                            <Button
-                                onClick={() => setIsCreateModalOpen(true)}
-                            >
-                                Create Project
-                            </Button>
+                            <Button onClick={() => setIsCreateModalOpen(true)}>Create Project</Button>
                             <Button
                                 variant="ghost"
+                                className="text-slate-200 hover:bg-white/10 focus:ring-white/20"
                                 isLoading={isSigningOut}
                                 onClick={async () => {
                                     try {
@@ -57,9 +54,9 @@ const AdminPage = ({ showToast }: Props) => {
                 />
             </div>
 
-            <div className="flex-1 overflow-hidden px-6 pb-6 pt-4">
-                <div className="grid h-full gap-4 lg:grid-cols-2">
-                    <Card title="Users" className="flex flex-col overflow-hidden">
+            <div className="flex-1 overflow-hidden px-5 pb-5 pt-4">
+                <div className="grid h-full gap-4 lg:grid-cols-[340px_minmax(0,1fr)]">
+                    <Card title="Users" className="flex min-h-0 flex-col overflow-hidden bg-slate-50">
                         <UserList
                             selectedUserId={selectedUser?.id ?? null}
                             onSelect={(u) => {
@@ -72,7 +69,7 @@ const AdminPage = ({ showToast }: Props) => {
                         />
                     </Card>
 
-                    <Card title="Project list" className="flex flex-col overflow-hidden">
+                    <Card title="Project list" className="flex min-h-0 flex-col overflow-hidden">
                         <AdminProjectList knownUsers={knownUsers} showToast={showToast} />
                     </Card>
                 </div>

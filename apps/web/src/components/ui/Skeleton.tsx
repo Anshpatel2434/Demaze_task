@@ -1,9 +1,7 @@
 type Props = {
-	className?: string;
+    className?: string;
 };
 
 export function Skeleton({ className }: Props) {
-	return (
-		<div className={`animate-pulse rounded-xl bg-white/10 ${className ?? ""}`} />
-	);
+    return <div className={`animate-pulse rounded-lg bg-slate-200 ${className ?? ""}`} />;
 }
