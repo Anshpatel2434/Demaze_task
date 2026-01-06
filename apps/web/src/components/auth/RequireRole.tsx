@@ -24,36 +24,11 @@ export function RequireRole({ role, children }: Props) {
         );
     }
 
-    if (isError) {
-        return (
-            <div className="mx-auto w-full max-w-2xl p-6">
-                <div className="rounded-2xl border border-white/10 bg-slate-950/40 p-5 text-slate-200">
-                    <p className="text-sm font-semibold">We couldn't verify your session.</p>
-                    <p className="mt-1 text-sm text-slate-400">Please try again.</p>
-                </div>
-            </div>
-        );
-    }
-
-    const userId = data?.userId ?? null;
-    const profile = data?.profile ?? null;
-
-    if (!userId) {
+    if (isError || !data?.userId || !data?.profile) {
         return <Navigate to="/auth" state={{ from: location }} replace />;
     }
 
-    if (!profile) {
-        return (
-            <div className="mx-auto w-full max-w-2xl p-6">
-                <div className="rounded-2xl border border-white/10 bg-slate-950/40 p-5 text-slate-200">
-                    <p className="text-sm font-semibold">Your profile is still initializing.</p>
-                    <p className="mt-1 text-sm text-slate-400">
-                        Please refresh in a moment. If this persists, sign out and back in.
-                    </p>
-                </div>
-            </div>
-        );
-    }
+    const profile = data.profile;
 
     const isAdmin = profile.is_admin;
 
