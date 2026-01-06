@@ -66,7 +66,7 @@ const AdminPage = ({ showToast }: Props) => {
                 </Card>
 
                 <Card title="Project list" className="lg:col-span-1">
-                    <AdminProjectList selectedUser={selectedUser} knownUsers={knownUsers} showToast={showToast} />
+                    <AdminProjectList knownUsers={knownUsers} showToast={showToast} />
                 </Card>
             </div>
         </div>

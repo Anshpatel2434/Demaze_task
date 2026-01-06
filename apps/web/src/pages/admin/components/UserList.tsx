@@ -4,6 +4,8 @@ import { useListUserProfilesQuery, PAGE_SIZE } from "../../../services/appApi";
 import { Input } from "../../../components/ui/Input";
 import { Skeleton } from "../../../components/ui/Skeleton";
 import { EmptyState } from "../../../components/ui/EmptyState";
+import { useAppDispatch, useAppSelector } from "../../../store/hooks";
+import { endDragUser, startDragUser } from "../../../store/slices/dndSlice";
 
 type Props = {
     selectedUserId: string | null;
@@ -11,6 +13,9 @@ type Props = {
 };
 
 export function UserList({ selectedUserId, onSelect }: Props) {
+    const dispatch = useAppDispatch();
+    const { locked, draggingUserId } = useAppSelector((s) => s.dnd);
+
     const [search, setSearch] = useState("");
     const [debouncedSearch, setDebouncedSearch] = useState("");
     const [offset, setOffset] = useState(0);
@@ -101,14 +106,25 @@ export function UserList({ selectedUserId, onSelect }: Props) {
             <ul className="max-h-[360px] space-y-2 overflow-auto pr-1">
                 {items.map((u) => {
                     const selected = u.id === selectedUserId;
+                    const isDragging = draggingUserId === u.id;
+
                     return (
                         <li key={u.id}>
                             <button
+                                draggable={!locked}
+                                onDragStart={(e) => {
+                                    dispatch(startDragUser(u.id));
+                                    e.dataTransfer.setData("application/json", JSON.stringify(u));
+                                    e.dataTransfer.effectAllowed = "move";
+                                }}
+                                onDragEnd={() => dispatch(endDragUser())}
                                 onClick={() => onSelect(u)}
                                 className={`flex w-full items-center justify-between rounded-xl border px-3 py-2 text-left text-sm transition focus:outline-none focus:ring-2 focus:ring-indigo-400/20 ${
                                     selected
                                         ? "border-indigo-400/60 bg-indigo-500/10"
                                         : "border-white/10 bg-slate-950/30 hover:bg-slate-950/50"
+                                } ${locked ? "cursor-not-allowed opacity-70" : "cursor-grab"} ${
+                                    isDragging ? "ring-2 ring-indigo-400/30" : ""
                                 }`}
                             >
                                 <div className="min-w-0">
