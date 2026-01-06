@@ -4,6 +4,8 @@ import { PAGE_SIZE, useListProjectsQuery, useUpdateProjectMutation } from "../..
 import { Skeleton } from "../../../components/ui/Skeleton";
 import { EmptyState } from "../../../components/ui/EmptyState";
 import { Button } from "../../../components/ui/Button";
+import { useAppDispatch } from "../../../store/hooks";
+import { lockDnd, unlockDnd } from "../../../store/slices/dndSlice";
 import type { ShowToast } from "../../../App";
 
 function findUserEmail(users: UserProfile[], id: string) {
@@ -17,6 +19,7 @@ type Props = {
 };
 
 export function AdminProjectList({ selectedUser, knownUsers, showToast }: Props) {
+    const dispatch = useAppDispatch();
     const [offset, setOffset] = useState(0);
 
     const args = useMemo(() => ({ offset, limit: PAGE_SIZE }), [offset]);
@@ -60,6 +63,9 @@ export function AdminProjectList({ selectedUser, knownUsers, showToast }: Props)
     const assign = async (project: Project, user: UserProfile) => {
         if (user.id === project.assigned_user_id) return;
 
+        // Lock DnD while updating
+        dispatch(lockDnd(project.id));
+
         try {
             await updateProject({
                 id: project.id,
@@ -69,6 +75,8 @@ export function AdminProjectList({ selectedUser, knownUsers, showToast }: Props)
         } catch (err) {
             const message = (err as { data?: string })?.data ?? "Failed to assign project";
             showToast("error", message);
+        } finally {
+            dispatch(unlockDnd());
         }
     };
 
@@ -111,15 +119,15 @@ export function AdminProjectList({ selectedUser, knownUsers, showToast }: Props)
     return (
         <div className="h-full flex flex-col gap-6">
             {/* Project sections */}
-            <div className="grid gap-6 md:grid-cols-2 flex-1">
+            <div className="grid gap-6 md:grid-cols-2 flex-1 min-h-0">
                 {/* In Progress Section */}
-                <div className="flex flex-col">
+                <div className="flex flex-col min-h-0">
                     <div className="flex items-center justify-between mb-4">
                         <h3 className="text-sm font-semibold text-slate-100">In Progress</h3>
                         <p className="text-xs text-slate-400">{inProgressProjects.length}</p>
                     </div>
                     
-                    <div className="flex-1 overflow-auto rounded-2xl border border-white/10 bg-slate-950/20 p-4">
+                    <div className="flex-1 min-h-0 overflow-auto rounded-2xl border border-white/10 bg-slate-950/20 p-4">
                         {isLoading && inProgressProjects.length === 0 ? (
                             <div className="space-y-3">
                                 {Array.from({ length: 5 }).map((_, idx) => (
@@ -184,13 +192,13 @@ export function AdminProjectList({ selectedUser, knownUsers, showToast }: Props)
                 </div>
 
                 {/* Completed Section */}
-                <div className="flex flex-col">
+                <div className="flex flex-col min-h-0">
                     <div className="flex items-center justify-between mb-4">
                         <h3 className="text-sm font-semibold text-slate-100">Completed</h3>
                         <p className="text-xs text-slate-400">{completedProjects.length}</p>
                     </div>
                     
-                    <div className="flex-1 overflow-auto rounded-2xl border border-white/10 bg-slate-950/20 p-4">
+                    <div className="flex-1 min-h-0 overflow-auto rounded-2xl border border-white/10 bg-slate-950/20 p-4">
                         {isLoading && completedProjects.length === 0 ? (
                             <div className="space-y-3">
                                 {Array.from({ length: 5 }).map((_, idx) => (

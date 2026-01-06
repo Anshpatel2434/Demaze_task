@@ -100,7 +100,7 @@ export function UserList({ selectedUserId, onSelect }: Props) {
                 <EmptyState title="No users found" description="Try a different email search." />
             ) : null}
 
-            <div className="flex-1 overflow-auto">
+            <div className="flex-1 min-h-0 overflow-auto">
                 <ul className="space-y-2 pr-1">
                     {items.map((u) => {
                         const selected = u.id === selectedUserId;
