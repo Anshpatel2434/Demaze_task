@@ -2,11 +2,14 @@ import { useMemo } from "react";
 import { useBootstrapAuthQuery, useSignOutMutation } from "../../../services/appApi";
 import { TopBar } from "../../../components/ui/TopBar";
 import { Button } from "../../../components/ui/Button";
-import { useToast } from "../../../hooks/useToast";
+import type { ShowToast } from "../../../App";
 import { ProjectColumn } from "../components/ProjectColumn";
 
-const UserDashboard = () => {
-    const toast = useToast();
+type Props = {
+    showToast: ShowToast;
+};
+
+const UserDashboard = ({ showToast }: Props) => {
     const { data } = useBootstrapAuthQuery();
     const userId = data?.userId ?? null;
 
@@ -28,10 +31,10 @@ const UserDashboard = () => {
                         onClick={async () => {
                             try {
                                 await signOut().unwrap();
-                                toast.info("Signed out.", "auth:signout");
+                                showToast("info", "Signed out.");
                             } catch (err) {
                                 const message = (err as { data?: string })?.data ?? "Couldn't sign out";
-                                toast.error(message, `auth:signout:error:${message}`);
+                                showToast("error", message);
                             }
                         }}
                     >
@@ -42,8 +45,8 @@ const UserDashboard = () => {
 
             {userId ? (
                 <div className="grid gap-4 md:grid-cols-2">
-                    <ProjectColumn assignedUserId={userId} isCompleted={false} title="In Progress" />
-                    <ProjectColumn assignedUserId={userId} isCompleted={true} title="Completed" />
+                    <ProjectColumn assignedUserId={userId} isCompleted={false} title="In Progress" showToast={showToast} />
+                    <ProjectColumn assignedUserId={userId} isCompleted={true} title="Completed" showToast={showToast} />
                 </div>
             ) : null}
         </div>

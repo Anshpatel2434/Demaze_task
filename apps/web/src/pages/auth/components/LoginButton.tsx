@@ -1,14 +1,13 @@
 import { supabase } from "../../../services/apiClient";
-import { useToast } from "../../../hooks/useToast";
+import type { ShowToast } from "../../../App";
 import { Button } from "../../../components/ui/Button";
 
 type Props = {
     disabled?: boolean;
+    showToast: ShowToast;
 };
 
-export const LoginButton = ({ disabled }: Props) => {
-    const toast = useToast();
-
+export const LoginButton = ({ disabled, showToast }: Props) => {
     const handleGoogleLogin = async () => {
         const { error } = await supabase.auth.signInWithOAuth({
             provider: "google",
@@ -17,7 +16,7 @@ export const LoginButton = ({ disabled }: Props) => {
             },
         });
 
-        if (error) toast.error(error.message, `oauth:${error.message}`);
+        if (error) showToast("error", error.message);
     };
 
     return (

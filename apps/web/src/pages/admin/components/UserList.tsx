@@ -1,8 +1,6 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { UserProfile } from "../../../types";
 import { useListUserProfilesQuery, PAGE_SIZE } from "../../../services/appApi";
-import { useDebouncedValue } from "../../../hooks/useDebouncedValue";
-import { useInfiniteScroll } from "../../../hooks/useInfiniteScroll";
 import { Input } from "../../../components/ui/Input";
 import { Skeleton } from "../../../components/ui/Skeleton";
 import { EmptyState } from "../../../components/ui/EmptyState";
@@ -14,8 +12,21 @@ type Props = {
 
 export function UserList({ selectedUserId, onSelect }: Props) {
     const [search, setSearch] = useState("");
-    const debouncedSearch = useDebouncedValue(search, 350);
+    const [debouncedSearch, setDebouncedSearch] = useState("");
     const [offset, setOffset] = useState(0);
+
+    const searchTimerRef = useRef<number | null>(null);
+
+    useEffect(() => {
+        if (searchTimerRef.current) window.clearTimeout(searchTimerRef.current);
+        searchTimerRef.current = window.setTimeout(() => {
+            setDebouncedSearch(search);
+        }, 350);
+
+        return () => {
+            if (searchTimerRef.current) window.clearTimeout(searchTimerRef.current);
+        };
+    }, [search]);
 
     const args = useMemo(
         () => ({ searchEmail: debouncedSearch.trim() || undefined, offset, limit: PAGE_SIZE }),
@@ -27,13 +38,26 @@ export function UserList({ selectedUserId, onSelect }: Props) {
     const nextOffset = data?.nextOffset ?? null;
 
     const canLoadMore = Boolean(nextOffset) && !isFetching;
-    const sentinelRef = useInfiniteScroll<HTMLLIElement>({
-        enabled: canLoadMore,
-        onLoadMore: () => {
-            if (nextOffset == null) return;
-            setOffset(nextOffset);
-        },
-    });
+
+    const sentinelRef = useRef<HTMLLIElement | null>(null);
+
+    useEffect(() => {
+        if (!canLoadMore) return;
+        const el = sentinelRef.current;
+        if (!el) return;
+
+        const observer = new IntersectionObserver(
+            (entries) => {
+                if (!entries[0]?.isIntersecting) return;
+                if (nextOffset == null) return;
+                setOffset(nextOffset);
+            },
+            { root: null, rootMargin: "200px" }
+        );
+
+        observer.observe(el);
+        return () => observer.disconnect();
+    }, [canLoadMore, nextOffset]);
 
     return (
         <div className="space-y-3">

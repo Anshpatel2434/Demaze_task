@@ -1,12 +1,11 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ProjectSchema } from "../../../types";
 import type { UserProfile } from "../../../types";
 import { useCreateProjectMutation } from "../../../services/appApi";
 import { Input } from "../../../components/ui/Input";
 import { Textarea } from "../../../components/ui/Textarea";
 import { Button } from "../../../components/ui/Button";
-import { useToast } from "../../../hooks/useToast";
-import { useDebouncedCallback } from "../../../hooks/useDebouncedCallback";
+import type { ShowToast } from "../../../App";
 
 const CreateSchema = ProjectSchema.pick({
     assigned_user_id: true,
@@ -16,10 +15,10 @@ const CreateSchema = ProjectSchema.pick({
 
 type Props = {
     selectedUser: UserProfile | null;
+    showToast: ShowToast;
 };
 
-export function CreateProjectForm({ selectedUser }: Props) {
-    const toast = useToast();
+export function CreateProjectForm({ selectedUser, showToast }: Props) {
     const [title, setTitle] = useState("");
     const [description, setDescription] = useState("");
 
@@ -32,45 +31,53 @@ export function CreateProjectForm({ selectedUser }: Props) {
 
     const canSubmit = Boolean(selectedUser?.id) && title.trim().length > 0;
 
-    const submitDebounced = useDebouncedCallback(
-        async () => {
-            if (!selectedUser) {
-                toast.info("Select a user before creating a project.", "admin:create:missing-user");
-                return;
-            }
+    const submitTimerRef = useRef<number | null>(null);
 
-            const parsed = CreateSchema.safeParse({
-                assigned_user_id: selectedUser.id,
-                title: title.trim(),
-                description: normalizedDescription,
-            });
+    const onSubmit = async () => {
+        if (!selectedUser) {
+            showToast("info", "Select a user before creating a project.");
+            return;
+        }
 
-            if (!parsed.success) {
-                const message = parsed.error.issues.map((i) => i.message).join("\n");
-                toast.error(message, `admin:create:validation:${message}`);
-                return;
-            }
+        const parsed = CreateSchema.safeParse({
+            assigned_user_id: selectedUser.id,
+            title: title.trim(),
+            description: normalizedDescription,
+        });
 
-            try {
-                await createProject(parsed.data).unwrap();
-                toast.success("Project created.", "admin:create:success");
-                setTitle("");
-                setDescription("");
-            } catch (err) {
-                const message = (err as { data?: string })?.data ?? "Failed to create project";
-                toast.error(message, `admin:create:error:${message}`);
-            }
-        },
-        250,
-        { leading: true, trailing: false }
-    );
+        if (!parsed.success) {
+            const message = parsed.error.issues.map((i) => i.message).join("\n");
+            showToast("error", message);
+            return;
+        }
+
+        try {
+            await createProject(parsed.data).unwrap();
+            showToast("success", "Project created.");
+            setTitle("");
+            setDescription("");
+        } catch (err) {
+            const message = (err as { data?: string })?.data ?? "Failed to create project";
+            showToast("error", message);
+        }
+    };
+
+    useEffect(() => {
+        return () => {
+            if (submitTimerRef.current) window.clearTimeout(submitTimerRef.current);
+        };
+    }, []);
 
     return (
         <form
             onSubmit={(e) => {
                 e.preventDefault();
                 if (isLoading) return;
-                submitDebounced.callback();
+
+                if (submitTimerRef.current) window.clearTimeout(submitTimerRef.current);
+                submitTimerRef.current = window.setTimeout(() => {
+                    void onSubmit();
+                }, 250);
             }}
             className="space-y-4"
         >
