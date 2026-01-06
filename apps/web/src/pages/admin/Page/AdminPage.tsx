@@ -65,6 +65,7 @@ const AdminPage = ({ showToast }: Props) => {
                                     return [u, ...prev].slice(0, 50);
                                 });
                             }}
+                            setKnownUsers={setKnownUsers}
                         />
                     </div>
                 </aside>

@@ -39,7 +39,6 @@ export const AuthPage = ({ showToast }: Props) => {
                 await signUp({ email, password }).unwrap();
                 showToast("success", "Account created — check your email if confirmation is enabled.");
             }
-
             setEmail("");
             setPassword("");
         } catch (err) {

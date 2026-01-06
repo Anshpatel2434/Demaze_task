@@ -8,7 +8,8 @@ import { useAppDispatch, useAppSelector } from "../../../store/hooks";
 import { lockDnd, unlockDnd } from "../../../store/slices/dndSlice";
 
 function findUserEmail(users: UserProfile[], id: string) {
-    return users.find((u) => u.id === id)?.email ?? id.slice(0, 8);
+    const email = users.find((u) => u.id === id)?.email
+    return email;
 }
 
 type Props = {

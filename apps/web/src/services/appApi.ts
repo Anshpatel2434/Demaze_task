@@ -8,7 +8,7 @@ type ApiError = { status: "CUSTOM_ERROR"; data: string };
 const apiError = (message: string): ApiError => ({ status: "CUSTOM_ERROR", data: message });
 const zodErrorToMessage = (error: z.ZodError) => error.issues.map((i) => i.message).join("\n");
 
-const PAGE_SIZE_DEFAULT = 5;
+const PAGE_SIZE_DEFAULT = 10;
 
 type BootstrapAuthResult = {
     userId: string | null;
