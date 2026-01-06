@@ -68,7 +68,6 @@ export function AdminProjectList({ selectedUser, knownUsers, showToast }: Props)
             await updateProject({
                 id: project.id,
                 patch: { assigned_user_id: selectedUser.id },
-                optimisticProject: project,
             }).unwrap();
             showToast("success", "Assignment updated.");
         } catch (err) {
