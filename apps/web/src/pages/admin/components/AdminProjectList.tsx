@@ -93,7 +93,7 @@ export function AdminProjectList({ knownUsers, showToast }: Props) {
     );
 
     return (
-        <div className="space-y-3">
+        <div ref={scrollContainerRef} className="space-y-3 overflow-y-auto">
             <div className="flex items-center justify-between">
                 <h2 className="text-sm font-semibold text-slate-100">Projects</h2>
                 <p className="text-xs text-slate-400">{items.length}</p>
@@ -126,7 +126,7 @@ export function AdminProjectList({ knownUsers, showToast }: Props) {
                 <EmptyState title="No projects" description="Create a project to get started." />
             ) : null}
 
-            <div ref={scrollContainerRef} className="flex-1 space-y-3 overflow-y-auto">
+            <div className="flex-1 space-y-3 overflow-y-auto">
                 {items.map((p) => {
                     const isUpdating = updatingProjectId === p.id;
                     const isDropTarget = draggingUserId !== null && !locked;
@@ -184,7 +184,6 @@ export function AdminProjectList({ knownUsers, showToast }: Props) {
                         </div>
                     );
                 })}
-                <div ref={sentinelRef} />
             </div>
 
 
@@ -198,12 +197,13 @@ export function AdminProjectList({ knownUsers, showToast }: Props) {
 
             {selectedProject && (
                 <EditProjectModal
-                    isOpen={true}
-                    onClose={() => setSelectedProject(null)}
-                    project={selectedProject}
-                    showToast={showToast}
+                isOpen={true}
+                onClose={() => setSelectedProject(null)}
+                project={selectedProject}
+                showToast={showToast}
                 />
             )}
+            <div ref={sentinelRef} />
         </div>
     );
 }
