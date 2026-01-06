@@ -16,9 +16,10 @@ const CreateSchema = ProjectSchema.pick({
 type Props = {
     selectedUser: UserProfile | null;
     showToast: ShowToast;
+    onSuccess?: () => void;
 };
 
-export function CreateProjectForm({ selectedUser, showToast }: Props) {
+export function CreateProjectForm({ selectedUser, showToast, onSuccess }: Props) {
     const [title, setTitle] = useState("");
     const [description, setDescription] = useState("");
 
@@ -56,6 +57,7 @@ export function CreateProjectForm({ selectedUser, showToast }: Props) {
             showToast("success", "Project created.");
             setTitle("");
             setDescription("");
+            onSuccess?.();
         } catch (err) {
             const message = (err as { data?: string })?.data ?? "Failed to create project";
             showToast("error", message);

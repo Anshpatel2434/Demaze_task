@@ -57,17 +57,13 @@ export function AdminProjectList({ selectedUser, knownUsers, showToast }: Props)
         };
     }, []);
 
-    const assign = async (project: Project) => {
-        if (!selectedUser) {
-            showToast("info", "Select a user to assign.");
-            return;
-        }
-        if (selectedUser.id === project.assigned_user_id) return;
+    const assign = async (project: Project, user: UserProfile) => {
+        if (user.id === project.assigned_user_id) return;
 
         try {
             await updateProject({
                 id: project.id,
-                patch: { assigned_user_id: selectedUser.id },
+                patch: { assigned_user_id: user.id },
             }).unwrap();
             showToast("success", "Assignment updated.");
         } catch (err) {
@@ -83,80 +79,156 @@ export function AdminProjectList({ selectedUser, knownUsers, showToast }: Props)
         assignTimerRef.current = window.setTimeout(() => {
             const p = pendingProjectRef.current;
             pendingProjectRef.current = null;
-            if (p) void assign(p);
+            if (p && selectedUser) void assign(p, selectedUser);
         }, 250);
     };
 
+    const handleDrop = async (e: React.DragEvent, project: Project) => {
+        e.preventDefault();
+        
+        const payload = e.dataTransfer.getData("application/json");
+        if (!payload) return;
+
+        let draggedUser: UserProfile;
+        try {
+            draggedUser = JSON.parse(payload) as UserProfile;
+        } catch {
+            return;
+        }
+
+        // Only allow assignment to in-progress projects
+        if (project.is_completed) {
+            showToast("info", "Cannot assign users to completed projects.");
+            return;
+        }
+
+        await assign(project, draggedUser);
+    };
+
+    const inProgressProjects = items.filter(p => !p.is_completed);
+    const completedProjects = items.filter(p => p.is_completed);
+
     return (
-        <div className="space-y-3">
-            <div className="flex items-center justify-between">
-                <h2 className="text-sm font-semibold text-slate-100">Projects</h2>
-                <p className="text-xs text-slate-400">{items.length}</p>
-            </div>
-
-            {isLoading ? (
-                <div className="space-y-3">
-                    {Array.from({ length: 5 }).map((_, idx) => (
-                        <Skeleton key={idx} className="h-28 w-full" />
-                    ))}
-                </div>
-            ) : null}
-
-            {isError ? (
-                <EmptyState
-                    title="Couldn't load projects"
-                    description="Please retry."
-                    action={
-                        <button
-                            onClick={() => refetch()}
-                            className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-slate-100 hover:bg-white/10"
-                        >
-                            Retry
-                        </button>
-                    }
-                />
-            ) : null}
-
-            {!isLoading && !isError && items.length === 0 ? (
-                <EmptyState title="No projects" description="Create a project to get started." />
-            ) : null}
-
-            <div className="space-y-3">
-                {items.map((p) => (
-                    <div
-                        key={p.id}
-                        className="rounded-2xl border border-white/10 bg-slate-950/40 p-4 shadow-sm"
-                    >
-                        <div className="flex items-start justify-between gap-3">
-                            <div className="min-w-0">
-                                <p className="truncate text-sm font-semibold text-slate-100">{p.title}</p>
-                                <p className="mt-1 line-clamp-2 text-sm text-slate-400">{p.description ?? "—"}</p>
+        <div className="h-full flex flex-col gap-6">
+            {/* Project sections */}
+            <div className="grid gap-6 md:grid-cols-2 flex-1">
+                {/* In Progress Section */}
+                <div className="flex flex-col">
+                    <div className="flex items-center justify-between mb-4">
+                        <h3 className="text-sm font-semibold text-slate-100">In Progress</h3>
+                        <p className="text-xs text-slate-400">{inProgressProjects.length}</p>
+                    </div>
+                    
+                    <div className="flex-1 overflow-auto rounded-2xl border border-white/10 bg-slate-950/20 p-4">
+                        {isLoading && inProgressProjects.length === 0 ? (
+                            <div className="space-y-3">
+                                {Array.from({ length: 5 }).map((_, idx) => (
+                                    <Skeleton key={idx} className="h-28 w-full" />
+                                ))}
                             </div>
-                            <span
-                                className={`shrink-0 rounded-full px-2 py-1 text-xs ${
-                                    p.is_completed
-                                        ? "bg-emerald-500/15 text-emerald-200"
-                                        : "bg-amber-500/15 text-amber-200"
-                                }`}
-                            >
-                                {p.is_completed ? "Completed" : "In progress"}
-                            </span>
-                        </div>
+                        ) : null}
 
-                        <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
-                            <p className="text-xs text-slate-400">
-                                Assigned: <span className="text-slate-200">{findUserEmail(knownUsers, p.assigned_user_id)}</span>
-                            </p>
-                            <Button
-                                variant="secondary"
-                                disabled={!selectedUser || isAssigning}
-                                onClick={() => onAssignClick(p)}
-                            >
-                                Assign to selected
-                            </Button>
+                        {isError && inProgressProjects.length === 0 ? (
+                            <EmptyState
+                                title="Couldn't load projects"
+                                description="Please retry."
+                                action={
+                                    <button
+                                        onClick={() => refetch()}
+                                        className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-slate-100 hover:bg-white/10"
+                                    >
+                                        Retry
+                                    </button>
+                                }
+                            />
+                        ) : null}
+
+                        {!isLoading && !isError && inProgressProjects.length === 0 ? (
+                            <EmptyState title="No projects" description="Create a project to get started." />
+                        ) : null}
+
+                        <div className="space-y-3">
+                            {inProgressProjects.map((p) => (
+                                <div
+                                    key={p.id}
+                                    onDrop={(e) => handleDrop(e, p)}
+                                    onDragOver={(e) => e.preventDefault()}
+                                    className="rounded-2xl border border-white/10 bg-slate-950/40 p-4 shadow-sm"
+                                >
+                                    <div className="flex items-start justify-between gap-3">
+                                        <div className="min-w-0">
+                                            <p className="truncate text-sm font-semibold text-slate-100">{p.title}</p>
+                                            <p className="mt-1 line-clamp-2 text-sm text-slate-400">{p.description ?? "—"}</p>
+                                        </div>
+                                        <span className="shrink-0 rounded-full bg-amber-500/15 px-2 py-1 text-xs text-amber-200">
+                                            In progress
+                                        </span>
+                                    </div>
+
+                                    <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+                                        <p className="text-xs text-slate-400">
+                                            Assigned: <span className="text-slate-200">{findUserEmail(knownUsers, p.assigned_user_id)}</span>
+                                        </p>
+                                        <Button
+                                            variant="secondary"
+                                            disabled={!selectedUser || isAssigning}
+                                            onClick={() => onAssignClick(p)}
+                                        >
+                                            Assign to selected
+                                        </Button>
+                                    </div>
+                                </div>
+                            ))}
                         </div>
                     </div>
-                ))}
+                </div>
+
+                {/* Completed Section */}
+                <div className="flex flex-col">
+                    <div className="flex items-center justify-between mb-4">
+                        <h3 className="text-sm font-semibold text-slate-100">Completed</h3>
+                        <p className="text-xs text-slate-400">{completedProjects.length}</p>
+                    </div>
+                    
+                    <div className="flex-1 overflow-auto rounded-2xl border border-white/10 bg-slate-950/20 p-4">
+                        {isLoading && completedProjects.length === 0 ? (
+                            <div className="space-y-3">
+                                {Array.from({ length: 5 }).map((_, idx) => (
+                                    <Skeleton key={idx} className="h-28 w-full" />
+                                ))}
+                            </div>
+                        ) : null}
+
+                        {!isLoading && !isError && completedProjects.length === 0 ? (
+                            <EmptyState title="No completed projects" description="Completed projects will appear here." />
+                        ) : null}
+
+                        <div className="space-y-3">
+                            {completedProjects.map((p) => (
+                                <div
+                                    key={p.id}
+                                    className="rounded-2xl border border-white/10 bg-slate-950/40 p-4 shadow-sm"
+                                >
+                                    <div className="flex items-start justify-between gap-3">
+                                        <div className="min-w-0">
+                                            <p className="truncate text-sm font-semibold text-slate-100">{p.title}</p>
+                                            <p className="mt-1 line-clamp-2 text-sm text-slate-400">{p.description ?? "—"}</p>
+                                        </div>
+                                        <span className="shrink-0 rounded-full bg-emerald-500/15 px-2 py-1 text-xs text-emerald-200">
+                                            Completed
+                                        </span>
+                                    </div>
+
+                                    <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+                                        <p className="text-xs text-slate-400">
+                                            Assigned: <span className="text-slate-200">{findUserEmail(knownUsers, p.assigned_user_id)}</span>
+                                        </p>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <div ref={sentinelRef} />

@@ -60,16 +60,18 @@ export function UserList({ selectedUserId, onSelect }: Props) {
     }, [canLoadMore, nextOffset]);
 
     return (
-        <div className="space-y-3">
-            <Input
-                label="Search users"
-                placeholder="Search by email…"
-                value={search}
-                onChange={(e) => {
-                    setSearch(e.target.value);
-                    setOffset(0);
-                }}
-            />
+        <div className="h-full flex flex-col">
+            <div className="space-y-3 mb-4">
+                <Input
+                    label="Search users"
+                    placeholder="Search by email…"
+                    value={search}
+                    onChange={(e) => {
+                        setSearch(e.target.value);
+                        setOffset(0);
+                    }}
+                />
+            </div>
 
             {isLoading ? (
                 <div className="space-y-2">
@@ -98,34 +100,41 @@ export function UserList({ selectedUserId, onSelect }: Props) {
                 <EmptyState title="No users found" description="Try a different email search." />
             ) : null}
 
-            <ul className="max-h-[360px] space-y-2 overflow-auto pr-1">
-                {items.map((u) => {
-                    const selected = u.id === selectedUserId;
-                    return (
-                        <li key={u.id}>
-                            <button
-                                onClick={() => onSelect(u)}
-                                className={`flex w-full items-center justify-between rounded-xl border px-3 py-2 text-left text-sm transition focus:outline-none focus:ring-2 focus:ring-indigo-400/20 ${
-                                    selected
-                                        ? "border-indigo-400/60 bg-indigo-500/10"
-                                        : "border-white/10 bg-slate-950/30 hover:bg-slate-950/50"
-                                }`}
-                            >
-                                <div className="min-w-0">
-                                    <p className="truncate font-medium text-slate-100">{u.email}</p>
-                                    <p className="truncate text-xs text-slate-400">{u.full_name ?? "—"}</p>
-                                </div>
-                                {u.is_admin ? (
-                                    <span className="rounded-full bg-indigo-500/15 px-2 py-1 text-xs text-indigo-200">
-                                        Admin
-                                    </span>
-                                ) : null}
-                            </button>
-                        </li>
-                    );
-                })}
-                <li aria-hidden ref={sentinelRef} />
-            </ul>
+            <div className="flex-1 overflow-auto">
+                <ul className="space-y-2 pr-1">
+                    {items.map((u) => {
+                        const selected = u.id === selectedUserId;
+                        return (
+                            <li key={u.id}>
+                                <button
+                                    draggable={true}
+                                    onDragStart={(e) => {
+                                        e.dataTransfer.setData("application/json", JSON.stringify(u));
+                                        e.dataTransfer.effectAllowed = "move";
+                                    }}
+                                    onClick={() => onSelect(u)}
+                                    className={`flex w-full items-center justify-between rounded-xl border px-3 py-2 text-left text-sm transition focus:outline-none focus:ring-2 focus:ring-indigo-400/20 ${
+                                        selected
+                                            ? "border-indigo-400/60 bg-indigo-500/10"
+                                            : "border-white/10 bg-slate-950/30 hover:bg-slate-950/50"
+                                    }`}
+                                >
+                                    <div className="min-w-0">
+                                        <p className="truncate font-medium text-slate-100">{u.email}</p>
+                                        <p className="truncate text-xs text-slate-400">{u.full_name ?? "—"}</p>
+                                    </div>
+                                    {u.is_admin ? (
+                                        <span className="rounded-full bg-indigo-500/15 px-2 py-1 text-xs text-indigo-200">
+                                            Admin
+                                        </span>
+                                    ) : null}
+                                </button>
+                            </li>
+                        );
+                    })}
+                    <li aria-hidden ref={sentinelRef} />
+                </ul>
+            </div>
 
             {isFetching && !isLoading ? (
                 <div className="space-y-2">

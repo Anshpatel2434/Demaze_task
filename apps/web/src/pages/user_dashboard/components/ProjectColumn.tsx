@@ -107,40 +107,42 @@ export function ProjectColumn({ assignedUserId, isCompleted, title, showToast }:
                 <p className="text-xs text-slate-400">{items.length}</p>
             </div>
 
-            {isLoading ? (
-                <div className="space-y-3">
-                    {Array.from({ length: 4 }).map((_, idx) => (
-                        <Skeleton key={idx} className="h-36 w-full" />
+            <div className="flex-1 overflow-auto">
+                {isLoading ? (
+                    <div className="space-y-3">
+                        {Array.from({ length: 4 }).map((_, idx) => (
+                            <Skeleton key={idx} className="h-36 w-full" />
+                        ))}
+                    </div>
+                ) : null}
+
+                {isError ? (
+                    <EmptyState
+                        title="Couldn't load projects"
+                        description="Please check your connection and retry."
+                        action={
+                            <button
+                                onClick={() => refetch()}
+                                className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-slate-100 hover:bg-white/10"
+                            >
+                                Retry
+                            </button>
+                        }
+                    />
+                ) : null}
+
+                {!isLoading && !isError && items.length === 0 ? (
+                    <EmptyState
+                        title="No projects"
+                        description={isCompleted ? "Drop a project here when you're done." : "You're all caught up."}
+                    />
+                ) : null}
+
+                <div className="flex flex-col gap-3">
+                    {items.map((p) => (
+                        <ProjectCard key={p.id} project={p} disabled={locked} showToast={showToast} />
                     ))}
                 </div>
-            ) : null}
-
-            {isError ? (
-                <EmptyState
-                    title="Couldn't load projects"
-                    description="Please check your connection and retry."
-                    action={
-                        <button
-                            onClick={() => refetch()}
-                            className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-slate-100 hover:bg-white/10"
-                        >
-                            Retry
-                        </button>
-                    }
-                />
-            ) : null}
-
-            {!isLoading && !isError && items.length === 0 ? (
-                <EmptyState
-                    title="No projects"
-                    description={isCompleted ? "Drop a project here when you're done." : "You're all caught up."}
-                />
-            ) : null}
-
-            <div className="flex flex-col gap-3">
-                {items.map((p) => (
-                    <ProjectCard key={p.id} project={p} disabled={locked} showToast={showToast} />
-                ))}
             </div>
 
             <div ref={sentinelRef} />
