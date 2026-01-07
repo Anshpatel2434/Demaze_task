@@ -1,45 +1,70 @@
 import type { ButtonHTMLAttributes } from "react";
+import { motion } from "framer-motion";
+import { Loader2 } from "lucide-react";
 
-type Variant = "primary" | "secondary" | "ghost" | "danger";
+type Variant = "primary" | "secondary" | "ghost" | "danger" | "success";
 
 type Props = ButtonHTMLAttributes<HTMLButtonElement> & {
     variant?: Variant;
     isLoading?: boolean;
+    size?: "sm" | "md" | "lg";
 };
 
 const variantClasses: Record<Variant, string> = {
     primary:
-        "bg-indigo-600 text-white hover:bg-indigo-500 focus:ring-indigo-400 disabled:bg-indigo-300",
+        "bg-gradient-to-r from-indigo-600 to-purple-600 text-white hover:from-indigo-500 hover:to-purple-500 focus:ring-indigo-400 shadow-lg hover:shadow-xl disabled:from-indigo-300 disabled:to-purple-300",
     secondary:
-        "border border-slate-200 bg-white text-slate-900 hover:bg-slate-50 focus:ring-indigo-400 disabled:bg-slate-50",
+        "border-2 border-slate-200 bg-gradient-to-r from-white to-slate-50 text-slate-700 hover:from-slate-50 hover:to-slate-100 hover:border-slate-300 focus:ring-indigo-400 disabled:from-slate-50 disabled:to-slate-100 shadow-sm hover:shadow-md",
     ghost:
-        "bg-transparent text-slate-700 hover:bg-slate-100 focus:ring-indigo-400 disabled:text-slate-400",
+        "bg-transparent text-slate-600 hover:bg-slate-100 focus:ring-indigo-400 disabled:text-slate-400",
     danger:
-        "bg-rose-600 text-white hover:bg-rose-500 focus:ring-rose-400 disabled:bg-rose-300",
+        "bg-gradient-to-r from-rose-600 to-pink-600 text-white hover:from-rose-500 hover:to-pink-500 focus:ring-rose-400 shadow-lg hover:shadow-xl disabled:from-rose-300 disabled:to-pink-300",
+    success:
+        "bg-gradient-to-r from-emerald-600 to-green-600 text-white hover:from-emerald-500 hover:to-green-500 focus:ring-emerald-400 shadow-lg hover:shadow-xl disabled:from-emerald-300 disabled:to-green-300",
+};
+
+const sizeClasses = {
+    sm: "px-3 py-2 text-sm",
+    md: "px-4 py-2.5 text-sm",
+    lg: "px-6 py-3 text-base"
 };
 
 export function Button({
     variant = "primary",
     isLoading,
+    size = "md",
     className,
     disabled,
     children,
     ...props
 }: Props) {
     return (
-        <button
-            {...props}
+        <motion.button
+            whileHover={{ scale: disabled || isLoading ? 1 : 1.02 }}
+            whileTap={{ scale: disabled || isLoading ? 1 : 0.98 }}
+            transition={{ duration: 0.15 }}
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            {...(props as any)}
             disabled={disabled || isLoading}
-            className={`inline-flex items-center justify-center gap-2 rounded-lg px-3 py-1.5 text-sm font-semibold shadow-sm transition-colors focus:outline-none focus:ring-2 disabled:cursor-not-allowed disabled:opacity-70 ${variantClasses[variant]} ${className ?? ""}`}
+            className={`inline-flex items-center justify-center gap-2 rounded-xl font-semibold transition-all duration-200 focus:outline-none focus:ring-2 disabled:cursor-not-allowed disabled:opacity-70 ${variantClasses[variant]} ${sizeClasses[size]} ${className ?? ""}`}
         >
             {isLoading ? (
-                <span className="inline-flex items-center gap-2">
-                    <span className="h-4 w-4 animate-spin rounded-full border-2 border-current/30 border-t-current" />
-                    <span>Working…</span>
-                </span>
+                <motion.span 
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="inline-flex items-center gap-2"
+                >
+                    <motion.div
+                        animate={{ rotate: 360 }}
+                        transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                    >
+                        <Loader2 className="h-4 w-4" />
+                    </motion.div>
+                    <span>Working...</span>
+                </motion.span>
             ) : (
-                children
+                <span>{children}</span>
             )}
-        </button>
+        </motion.button>
     );
 }

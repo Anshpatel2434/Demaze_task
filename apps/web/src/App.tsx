@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
+import { motion } from "framer-motion";
 import { RequireRole } from "./components/auth/RequireRole";
 import { RootRedirect } from "./components/auth/RootRedirect";
 import AdminPage from "./pages/admin/Page/AdminPage";
@@ -62,23 +63,31 @@ function App() {
     }, [dispatch]);
 
     return (
-        <div className="min-h-dvh bg-slate-100 text-slate-900">
+        <div className="min-h-dvh bg-gradient-to-br from-slate-50 via-white to-slate-100 text-slate-900">
             {toast ? (
-                <div className="fixed right-4 top-4 z-50 w-[min(420px,calc(100vw-2rem))]">
+                <motion.div 
+                    initial={{ opacity: 0, x: 400, scale: 0.9 }}
+                    animate={{ opacity: 1, x: 0, scale: 1 }}
+                    exit={{ opacity: 0, x: 400, scale: 0.9 }}
+                    transition={{ type: "spring", stiffness: 300, damping: 25 }}
+                    className="fixed right-6 top-6 z-50 w-[min(420px,calc(100vw-2rem))]"
+                >
                     <div
                         role="status"
-                        className={`flex items-start justify-between gap-4 rounded-xl border p-4 shadow-lg ${toastStyles[toast.variant]}`}
+                        className={`flex items-start justify-between gap-4 rounded-2xl border p-4 shadow-2xl backdrop-blur-sm ${toastStyles[toast.variant]}`}
                     >
-                        <p className="text-sm leading-5">{toast.message}</p>
-                        <button
+                        <p className="text-sm leading-5 font-medium">{toast.message}</p>
+                        <motion.button
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
                             onClick={() => setToast(null)}
-                            className="rounded-md px-2 py-1 text-xs text-slate-700 hover:bg-slate-900/5 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-400/20"
+                            className="rounded-xl px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-900/5 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-400/20 transition-colors"
                             aria-label="Dismiss notification"
                         >
                             Dismiss
-                        </button>
+                        </motion.button>
                     </div>
-                </div>
+                </motion.div>
             ) : null}
 
             <Router>
