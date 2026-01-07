@@ -70,6 +70,7 @@ export function ProjectCard({ project, disabled, showToast }: Props) {
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
                 project={project}
+                users={[]}
                 showToast={showToast}
             />
         </>

@@ -24,6 +24,18 @@ const AdminPage = ({ showToast }: Props) => {
         return "Search users, create projects, and assign them with fast feedback.";
     }, []);
 
+    const handleUserSelect = (user: UserProfile) => {
+        setSelectedUser(user);
+        setKnownUsers((prev) => {
+            if (prev.some((p) => p.id === user.id)) return prev;
+            return [user, ...prev].slice(0, 50);
+        });
+    };
+
+    const handleKnownUsersChange = (users: UserProfile[]) => {
+        setKnownUsers(users);
+    };
+
     return (
         <div className="flex h-screen flex-col overflow-hidden">
             <div className="shrink-0 px-5 pt-5">
@@ -59,18 +71,16 @@ const AdminPage = ({ showToast }: Props) => {
                     <Card title="Users" className="flex min-h-0 flex-col overflow-hidden bg-slate-50">
                         <UserList
                             selectedUserId={selectedUser?.id ?? null}
-                            onSelect={(u) => {
-                                setSelectedUser(u);
-                                setKnownUsers((prev) => {
-                                    if (prev.some((p) => p.id === u.id)) return prev;
-                                    return [u, ...prev].slice(0, 50);
-                                });
-                            }}
+                            onSelect={handleUserSelect}
                         />
                     </Card>
 
                     <Card title="Project list" className="flex min-h-0 flex-col overflow-hidden">
-                        <AdminProjectList knownUsers={knownUsers} showToast={showToast} />
+                        <AdminProjectList 
+                            knownUsers={knownUsers} 
+                            onKnownUsersChange={handleKnownUsersChange}
+                            showToast={showToast} 
+                        />
                     </Card>
                 </div>
             </div>
@@ -78,7 +88,7 @@ const AdminPage = ({ showToast }: Props) => {
             <CreateProjectModal
                 isOpen={isCreateModalOpen}
                 onClose={() => setIsCreateModalOpen(false)}
-                selectedUser={selectedUser}
+                users={knownUsers}
                 showToast={showToast}
             />
         </div>

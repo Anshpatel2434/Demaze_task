@@ -17,13 +17,14 @@ const CreateSchema = ProjectSchema.pick({
 type Props = {
     isOpen: boolean;
     onClose: () => void;
-    selectedUser: UserProfile | null;
+    users: UserProfile[];
     showToast: ShowToast;
 };
 
-export function CreateProjectModal({ isOpen, onClose, selectedUser, showToast }: Props) {
+export function CreateProjectModal({ isOpen, onClose, users, showToast }: Props) {
     const [title, setTitle] = useState("");
     const [description, setDescription] = useState("");
+    const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
 
     const [createProject, { isLoading }] = useCreateProjectMutation();
 
@@ -32,18 +33,13 @@ export function CreateProjectModal({ isOpen, onClose, selectedUser, showToast }:
         return t.length === 0 ? null : t;
     }, [description]);
 
-    const canSubmit = Boolean(selectedUser?.id) && title.trim().length > 0;
+    const canSubmit = title.trim().length > 0;
 
     const onSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        
-        if (!selectedUser) {
-            showToast("info", "Select a user before creating a project.");
-            return;
-        }
 
         const parsed = CreateSchema.safeParse({
-            assigned_user_id: selectedUser.id,
+            assigned_user_id: selectedUserId,
             title: title.trim(),
             description: normalizedDescription,
         });
@@ -59,12 +55,15 @@ export function CreateProjectModal({ isOpen, onClose, selectedUser, showToast }:
             showToast("success", "Project created.");
             setTitle("");
             setDescription("");
+            setSelectedUserId(null);
             onClose();
         } catch (err) {
             const message = (err as { data?: string })?.data ?? "Failed to create project";
             showToast("error", message);
         }
     };
+
+    const selectedUser = selectedUserId ? users.find(u => u.id === selectedUserId) : null;
 
     return (
         <Modal isOpen={isOpen} onClose={onClose} title="Create Project">
@@ -85,11 +84,28 @@ export function CreateProjectModal({ isOpen, onClose, selectedUser, showToast }:
                     disabled={isLoading}
                 />
 
-                <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700">
-                    <p className="font-medium text-slate-900">Assigned user</p>
-                    <p className="mt-1 text-sm text-slate-600">
-                        {selectedUser ? selectedUser.email : "Select a user from the list to assign this project."}
-                    </p>
+                <div className="space-y-2">
+                    <label className="block text-sm font-medium text-slate-700">
+                        Assign to user (optional)
+                    </label>
+                    <select
+                        value={selectedUserId ?? ""}
+                        onChange={(e) => setSelectedUserId(e.target.value || null)}
+                        className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-500 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 disabled:bg-slate-100"
+                        disabled={isLoading}
+                    >
+                        <option value="">Unassigned</option>
+                        {users.map((user) => (
+                            <option key={user.id} value={user.id}>
+                                {user.email} {user.full_name ? `(${user.full_name})` : ""}
+                            </option>
+                        ))}
+                    </select>
+                    {selectedUser && (
+                        <p className="text-sm text-slate-600">
+                            Selected: {selectedUser.email}
+                        </p>
+                    )}
                 </div>
 
                 <div className="flex gap-3">

@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import type { Project } from "../../types";
+import type { Project, UserProfile } from "../../types";
 import { ProjectSchema } from "../../types";
 import { useUpdateProjectMutation } from "../../services/appApi";
 import type { ShowToast } from "../../App";
@@ -11,18 +11,21 @@ import { Button } from "./Button";
 const EditableSchema = ProjectSchema.pick({
     title: true,
     description: true,
+    assigned_user_id: true,
 });
 
 type Props = {
     isOpen: boolean;
     onClose: () => void;
     project: Project;
+    users: UserProfile[];
     showToast: ShowToast;
 };
 
-export function EditProjectModal({ isOpen, onClose, project, showToast }: Props) {
+export function EditProjectModal({ isOpen, onClose, project, users, showToast }: Props) {
     const [title, setTitle] = useState(() => project.title);
     const [description, setDescription] = useState(() => project.description ?? "");
+    const [assignedUserId, setAssignedUserId] = useState<string | null>(project.assigned_user_id);
 
     const [updateProject, { isLoading }] = useUpdateProjectMutation();
 
@@ -32,10 +35,14 @@ export function EditProjectModal({ isOpen, onClose, project, showToast }: Props)
     }, [description]);
 
     const validation = useMemo(() => {
-        return EditableSchema.safeParse({ title: title.trim(), description: normalizedDescription });
-    }, [normalizedDescription, title]);
+        return EditableSchema.safeParse({ title: title.trim(), description: normalizedDescription, assigned_user_id: assignedUserId });
+    }, [normalizedDescription, title, assignedUserId]);
 
-    const canSubmit = validation.success && (title.trim() !== project.title || normalizedDescription !== project.description);
+    const canSubmit = validation.success && (
+        title.trim() !== project.title || 
+        normalizedDescription !== project.description || 
+        assignedUserId !== project.assigned_user_id
+    );
 
     const onSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -47,7 +54,11 @@ export function EditProjectModal({ isOpen, onClose, project, showToast }: Props)
         try {
             await updateProject({
                 id: project.id,
-                patch: { title: validation.data.title, description: validation.data.description },
+                patch: { 
+                    title: validation.data.title, 
+                    description: validation.data.description,
+                    assigned_user_id: validation.data.assigned_user_id
+                },
                 optimisticProject: project,
             }).unwrap();
             showToast("success", "Project updated");
@@ -57,6 +68,8 @@ export function EditProjectModal({ isOpen, onClose, project, showToast }: Props)
             showToast("error", message);
         }
     };
+
+    const assignedUser = assignedUserId ? users.find(u => u.id === assignedUserId) : null;
 
     return (
         <Modal isOpen={isOpen} onClose={onClose} title="Edit Project">
@@ -76,6 +89,30 @@ export function EditProjectModal({ isOpen, onClose, project, showToast }: Props)
                     onChange={(e) => setDescription(e.target.value)}
                     disabled={isLoading}
                 />
+
+                <div className="space-y-2">
+                    <label className="block text-sm font-medium text-slate-700">
+                        Assign to user (optional)
+                    </label>
+                    <select
+                        value={assignedUserId ?? ""}
+                        onChange={(e) => setAssignedUserId(e.target.value || null)}
+                        className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-500 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 disabled:bg-slate-100"
+                        disabled={isLoading}
+                    >
+                        <option value="">Unassigned</option>
+                        {users.map((user) => (
+                            <option key={user.id} value={user.id}>
+                                {user.email} {user.full_name ? `(${user.full_name})` : ""}
+                            </option>
+                        ))}
+                    </select>
+                    {assignedUser && (
+                        <p className="text-sm text-slate-600">
+                            Currently assigned to: {assignedUser.email}
+                        </p>
+                    )}
+                </div>
 
                 <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm">
                     <div className="flex items-center justify-between">

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Project, UserProfile } from "../../../types";
-import { PAGE_SIZE, useListProjectsQuery, useUpdateProjectMutation } from "../../../services/appApi";
+import { PAGE_SIZE, useListProjectsQuery, useUpdateProjectMutation, useListUserProfilesQuery } from "../../../services/appApi";
 import { Skeleton } from "../../../components/ui/Skeleton";
 import { EmptyState } from "../../../components/ui/EmptyState";
 import { EditProjectModal } from "../../../components/ui/EditProjectModal";
@@ -14,10 +14,11 @@ function findUserEmail(users: UserProfile[], id: string) {
 
 type Props = {
     knownUsers: UserProfile[];
+    onKnownUsersChange: (users: UserProfile[]) => void;
     showToast: ShowToast;
 };
 
-export function AdminProjectList({ knownUsers, showToast }: Props) {
+export function AdminProjectList({ knownUsers, onKnownUsersChange, showToast }: Props) {
     const dispatch = useAppDispatch();
     const { locked, draggingUserId, updatingProjectId } = useAppSelector((s) => s.dnd);
 
@@ -28,6 +29,37 @@ export function AdminProjectList({ knownUsers, showToast }: Props) {
     const { data, isLoading, isFetching, isError, refetch } = useListProjectsQuery(args);
     const items = data?.items ?? [];
     const nextOffset = data?.nextOffset ?? null;
+
+    // Get unique assigned user IDs from projects
+    const assignedUserIds = useMemo(() => {
+        const ids = new Set<string>();
+        items.forEach(project => {
+            if (project.assigned_user_id) {
+                ids.add(project.assigned_user_id);
+            }
+        });
+        return Array.from(ids);
+    }, [items]);
+
+    // Fetch users that are not in knownUsers yet
+    const { data: newUsersData } = useListUserProfilesQuery({
+        offset: 0,
+        limit: 100,
+    });
+
+    // Update knownUsers when we find new assigned users
+    useEffect(() => {
+        if (!newUsersData?.items) return;
+        
+        const currentKnownIds = new Set(knownUsers.map(u => u.id));
+        const newUsers = newUsersData.items.filter(user => 
+            assignedUserIds.includes(user.id) && !currentKnownIds.has(user.id)
+        );
+
+        if (newUsers.length > 0) {
+            onKnownUsersChange([...knownUsers, ...newUsers]);
+        }
+    }, [newUsersData?.items, assignedUserIds, knownUsers, onKnownUsersChange]);
 
     const canLoadMore = Boolean(nextOffset) && !isFetching;
 
@@ -171,7 +203,7 @@ export function AdminProjectList({ knownUsers, showToast }: Props) {
                                           <p className="text-xs text-slate-500">
                                               Assigned:{" "}
                                               <span className="text-slate-700">
-                                                  {findUserEmail(knownUsers, p.assigned_user_id)}
+                                                  {p.assigned_user_id ? findUserEmail(knownUsers, p.assigned_user_id) : "Unassigned"}
                                               </span>
                                           </p>
                                           {isDropTarget ? (
@@ -199,6 +231,7 @@ export function AdminProjectList({ knownUsers, showToast }: Props) {
                     isOpen={true}
                     onClose={() => setSelectedProject(null)}
                     project={selectedProject}
+                    users={knownUsers}
                     showToast={showToast}
                 />
             )}
