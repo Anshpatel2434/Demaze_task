@@ -72,6 +72,7 @@ const AdminPage = ({ showToast }: Props) => {
                         <UserList
                             selectedUserId={selectedUser?.id ?? null}
                             onSelect={handleUserSelect}
+                            setKnownUsers={setKnownUsers}
                         />
                     </Card>
 

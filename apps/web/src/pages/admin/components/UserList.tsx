@@ -10,9 +10,10 @@ import { endDragUser, startDragUser } from "../../../store/slices/dndSlice";
 type Props = {
     selectedUserId: string | null;
     onSelect: (user: UserProfile) => void;
+    setKnownUsers: (users: UserProfile[]) => void;
 };
 
-export function UserList({ selectedUserId, onSelect }: Props) {
+export function UserList({ selectedUserId, onSelect, setKnownUsers }: Props) {
     const dispatch = useAppDispatch();
     const { locked, draggingUserId } = useAppSelector((s) => s.dnd);
 
@@ -41,6 +42,12 @@ export function UserList({ selectedUserId, onSelect }: Props) {
     const { data, isLoading, isFetching, isError, refetch } = useListUserProfilesQuery(args);
     const items = data?.items ?? [];
     const nextOffset = data?.nextOffset ?? null;
+
+    useEffect(() => {
+        if(data){
+            setKnownUsers(items)
+        }
+    }, [data])
 
     const canLoadMore = Boolean(nextOffset) && !isFetching;
 
