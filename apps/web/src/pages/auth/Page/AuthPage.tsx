@@ -106,19 +106,6 @@ export const AuthPage = ({ showToast }: Props) => {
                         <Button type="submit" className="w-full" isLoading={isLoading} disabled={isBootstrapping}>
                             {isLoginMode ? "Sign in" : "Create account"}
                         </Button>
-
-                        <div className="relative py-2">
-                            <div className="absolute inset-0 flex items-center">
-                                <div className="w-full border-t border-slate-200" />
-                            </div>
-                            <div className="relative flex justify-center">
-                                <span className="bg-white px-2 text-xs text-slate-500">or</span>
-                            </div>
-                        </div>
-
-                        <div className="flex justify-center">
-                            <LoginButton disabled={isLoading || isBootstrapping} showToast={showToast} />
-                        </div>
                     </form>
                 </Card>
 

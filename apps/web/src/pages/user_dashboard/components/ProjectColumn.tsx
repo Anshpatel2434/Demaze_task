@@ -29,6 +29,12 @@ export function ProjectColumn({ assignedUserId, isCompleted, title, showToast }:
 
     const { data, isFetching, isLoading, isError, refetch } = useListProjectsQuery(args);
     const items = data?.items ?? [];
+    useEffect(() => {
+        if(data){
+            console.log("The items in the completed section is : ")
+            console.log(items)
+        }
+    }, [data])
     const nextOffset = data?.nextOffset ?? null;
 
     const canLoadMore = Boolean(nextOffset) && !isFetching;
@@ -48,7 +54,7 @@ export function ProjectColumn({ assignedUserId, isCompleted, title, showToast }:
                 if (nextOffset == null) return;
                 setOffset(nextOffset);
             },
-            { root: container, rootMargin: "200px" }
+            { root: container }
         );
 
         observer.observe(el);
