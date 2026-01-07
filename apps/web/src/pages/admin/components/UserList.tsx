@@ -40,14 +40,14 @@ export function UserList({ selectedUserId, onSelect, setKnownUsers }: Props) {
     );
 
     const { data, isLoading, isFetching, isError, refetch } = useListUserProfilesQuery(args);
-    const items = data?.items ?? [];
+    const items = useMemo(() => data?.items ?? [], [data]);
     const nextOffset = data?.nextOffset ?? null;
 
     useEffect(() => {
         if(data){
             setKnownUsers(items)
         }
-    }, [data])
+    }, [data, items, setKnownUsers])
 
     const canLoadMore = Boolean(nextOffset) && !isFetching;
 

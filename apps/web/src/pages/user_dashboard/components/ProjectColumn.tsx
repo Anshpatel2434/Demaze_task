@@ -1,13 +1,16 @@
 import { skipToken } from "@reduxjs/toolkit/query";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { motion } from "framer-motion";
 import type { Project } from "../../../types";
 import { PAGE_SIZE, useListProjectsQuery, useUpdateProjectMutation } from "../../../services/appApi";
 import { Skeleton } from "../../../components/ui/Skeleton";
+import { Loader } from "../../../components/ui/Loader";
 import { EmptyState } from "../../../components/ui/EmptyState";
 import { ProjectCard } from "./ProjectCard";
 import type { ShowToast } from "../../../App";
 import { useAppDispatch, useAppSelector } from "../../../store/hooks";
 import { endDrag, lockDnd, unlockDnd } from "../../../store/slices/dndSlice";
+import { CheckCircle2, Circle } from "lucide-react";
 
 type Props = {
     assignedUserId: string;
@@ -28,13 +31,13 @@ export function ProjectColumn({ assignedUserId, isCompleted, title, showToast }:
     }, [assignedUserId, isCompleted, offset]);
 
     const { data, isFetching, isLoading, isError, refetch } = useListProjectsQuery(args);
-    const items = data?.items ?? [];
+    const items = useMemo(() => data?.items ?? [], [data]);
     useEffect(() => {
         if(data){
             console.log("The items in the completed section is : ")
             console.log(items)
         }
-    }, [data])
+    }, [data, items])
     const nextOffset = data?.nextOffset ?? null;
 
     const canLoadMore = Boolean(nextOffset) && !isFetching;
@@ -104,62 +107,122 @@ export function ProjectColumn({ assignedUserId, isCompleted, title, showToast }:
     );
 
     return (
-        <section
+        <motion.section
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
             onDragOver={(e) => {
                 if (!locked) e.preventDefault();
             }}
             onDrop={onDrop}
-            className="flex h-full flex-col gap-2 rounded-xl border border-slate-200 bg-slate-50 p-3 overflow-hidden"
+            className="flex h-full flex-col gap-4 rounded-2xl border border-slate-200 bg-gradient-to-br from-white to-slate-50 p-5 overflow-hidden shadow-sm"
         >
-            <div className="flex items-center justify-between shrink-0">
-                <h2 className="text-xs font-semibold text-slate-700">{title}</h2>
-                <p className="text-xs text-slate-500">{items.length}</p>
-            </div>
+            <motion.div 
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.1 }}
+                className="flex items-center justify-between shrink-0"
+            >
+                <div className="flex items-center gap-2">
+                    <div className={`flex h-6 w-6 items-center justify-center rounded-md ${
+                        isCompleted 
+                            ? "bg-gradient-to-br from-emerald-500 to-green-600" 
+                            : "bg-gradient-to-br from-amber-500 to-orange-600"
+                    }`}>
+                        {isCompleted ? (
+                            <CheckCircle2 className="h-3 w-3 text-white" />
+                        ) : (
+                            <Circle className="h-3 w-3 text-white" />
+                        )}
+                    </div>
+                    <h2 className="text-sm font-semibold text-slate-800">{title}</h2>
+                </div>
+                <motion.div
+                    whileHover={{ scale: 1.05 }}
+                    className="flex items-center gap-2 rounded-lg bg-white px-2 py-1 shadow-sm border border-slate-200"
+                >
+                    <span className="text-xs font-medium text-slate-600">{items.length}</span>
+                </motion.div>
+            </motion.div>
 
             {isLoading ? (
-                <div className="space-y-2">
+                <motion.div 
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="space-y-3"
+                >
                     {Array.from({ length: 4 }).map((_, idx) => (
-                        <Skeleton key={idx} className="h-28 w-full" />
+                        <Skeleton key={idx} className="h-32 w-full rounded-2xl" />
                     ))}
-                </div>
+                </motion.div>
             ) : null}
 
             {isError ? (
-                <EmptyState
-                    title="Couldn't load projects"
-                    description="Please check your connection and retry."
-                    action={
-                        <button
-                            onClick={() => refetch()}
-                            className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-50"
-                        >
-                            Retry
-                        </button>
-                    }
-                />
+                <motion.div
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                >
+                    <EmptyState
+                        title="Couldn't load projects"
+                        description="Please check your connection and retry."
+                        variant="error"
+                        action={
+                            <motion.button
+                                whileHover={{ scale: 1.02 }}
+                                whileTap={{ scale: 0.98 }}
+                                onClick={() => refetch()}
+                                className="rounded-xl border border-slate-200 bg-gradient-to-r from-white to-slate-50 px-4 py-2 text-sm font-medium text-slate-700 shadow-sm hover:from-slate-50 hover:to-slate-100"
+                            >
+                                Retry
+                            </motion.button>
+                        }
+                    />
+                </motion.div>
             ) : null}
 
             {!isLoading && !isError && items.length === 0 ? (
-                <EmptyState
-                    title="No projects"
-                    description={isCompleted ? "Drop a project here when you're done." : "You're all caught up."}
-                />
+                <motion.div
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: 0.2 }}
+                >
+                    <EmptyState
+                        title="No projects"
+                        description={isCompleted ? "Drop a project here when you're done." : "You're all caught up."}
+                    />
+                </motion.div>
             ) : null}
 
-            <div ref={scrollContainerRef} className="min-h-0 flex-1 flex flex-col gap-2 overflow-y-auto">
-                {items.map((p) => (
-                    <ProjectCard key={p.id} project={p} disabled={locked} showToast={showToast} />
-                ))}
+            <div ref={scrollContainerRef} className="min-h-0 flex-1 flex flex-col gap-3 overflow-y-auto pr-1">
+                <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.2 }}
+                    className="space-y-3"
+                >
+                    {items.map((p, index) => (
+                        <motion.div
+                            key={p.id}
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: index * 0.05, duration: 0.3 }}
+                        >
+                            <ProjectCard project={p} disabled={locked} showToast={showToast} />
+                        </motion.div>
+                    ))}
+                </motion.div>
                 <div ref={sentinelRef} />
             </div>
 
             {isFetching && !isLoading ? (
-                <div className="space-y-2 shrink-0">
-                    {Array.from({ length: 2 }).map((_, idx) => (
-                        <Skeleton key={idx} className="h-28 w-full" />
-                    ))}
-                </div>
+                <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="flex justify-center py-4 shrink-0"
+                >
+                    <Loader size="sm" text="" />
+                </motion.div>
             ) : null}
-        </section>
+        </motion.section>
     );
 }
